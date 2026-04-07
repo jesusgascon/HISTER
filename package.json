@@ -1,0 +1,1 @@
+{"name":"hister-queen-edition","version":"1.0.0","private":true,"description":"Juego web estático tipo Hitster inspirado en Queen.","scripts":{"start":"python3 -m http.server 8000"},"license":"MIT"}
