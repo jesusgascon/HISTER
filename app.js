@@ -295,6 +295,15 @@ window.onload = function () {
         setStatus('⚠️ El generador QR no está disponible. Puedes seguir jugando con los controles de audio.', 'var(--primary-gold)');
     }
 
+    function resetGameQrContainer() {
+        if (!qrBox || !qrBox.parentNode) return;
+        var freshQrBox = document.createElement('div');
+        freshQrBox.id = 'game-qr-code';
+        qrBox.parentNode.replaceChild(freshQrBox, qrBox);
+        qrBox = freshQrBox;
+        qrInstance = null;
+    }
+
     function renderGameQr(url) {
         if (!qrLibraryAvailable) {
             qrBox.innerHTML = createQrFallbackMarkup(url, false);
@@ -303,17 +312,12 @@ window.onload = function () {
         }
 
         try {
-            if (!qrInstance) {
-                qrBox.innerHTML = '';
-                qrInstance = new QRCode(qrBox, {
-                    text: url,
-                    width: 200, height: 200,
-                    colorDark: '#000000', colorLight: '#ffffff'
-                });
-            } else {
-                qrInstance.clear();
-                qrInstance.makeCode(url);
-            }
+            resetGameQrContainer();
+            qrInstance = new QRCode(qrBox, {
+                text: url,
+                width: 200, height: 200,
+                colorDark: '#000000', colorLight: '#ffffff'
+            });
         } catch (e) {
             qrLibraryAvailable = false;
             qrInstance = null;
@@ -372,6 +376,7 @@ window.onload = function () {
         cardContainer.style.display = 'none';
         emptyState.style.display = 'block';
         activeCard.classList.remove('is-flipped');
+        resetGameQrContainer();
         currentSong = null;
         currentSongRevealed = false;
         gameCompleted = false;
@@ -726,6 +731,9 @@ window.onload = function () {
 
     // ── 17. Navegación ────────────────────────────────────────
     function goToGame() {
+        if (gameCompleted) {
+            resetSession();
+        }
         screenGame.style.display  = '';
         screenCards.style.display = 'none';
         navGame.classList.add('active');

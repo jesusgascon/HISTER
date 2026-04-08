@@ -19,6 +19,7 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 
 - La lógica de sesión ahora trata cada canción como una carta única estable, evitando repeticiones dentro del catálogo activo.
 - El historial de sesión evita duplicados de la misma canción.
+- Al volver a empezar una partida completada, la sesión se reinicia de forma limpia desde la pantalla principal.
 - Los botones de control de audio quedaron alineados de forma consistente, especialmente en móvil.
 - El panel de historial reserva altura desde el inicio para evitar saltos visuales de la carta principal.
 
@@ -30,3 +31,4 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 - Estados muertos o poco claros cuando un preview remoto falla o tarda demasiado.
 - Bloqueo de la sesión por cartas con preview no reproducible.
 - Degradación silenciosa cuando falla la generación de códigos QR.
+- Persistencia visual de la carta de fin en la cara frontal al reiniciar una nueva partida sin cerrar el navegador.

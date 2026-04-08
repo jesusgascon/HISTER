@@ -12,6 +12,7 @@ Juego web estático inspirado en Hitster para jugar con canciones de Queen. La a
 - Sin repeticiones dentro del catálogo activo durante la sesión.
 - Final de partida real al agotar el catálogo, con tarjeta especial de cierre.
 - Persistencia del estado de sesión y del final de partida tras recargar.
+- Reinicio limpio de la sesión al volver a empezar después de completar el catálogo.
 - Manejo más robusto de errores de audio y tiempos de espera de previews remotos.
 - Descarte automático en la sesión de cartas cuyo preview no se puede cargar.
 - Cartas imprimibles con QR o fallback visible si el generador QR no está disponible.
@@ -49,6 +50,8 @@ La aplicación guarda automáticamente en `localStorage`:
 - Estado de partida completada si ya no quedan canciones disponibles en el filtro actual.
 
 Para empezar desde cero, usa `Reiniciar Sesión`.
+
+Si la partida ya terminó y vuelves a la pantalla principal, al empezar de nuevo el juego reinicia la sesión completa para limpiar las cartas usadas y reconstruir correctamente la cara frontal con su QR.
 
 ## Robustez ante fallos externos
 
