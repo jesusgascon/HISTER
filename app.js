@@ -780,9 +780,9 @@ window.onload = function () {
             var info = document.createElement('div');
             info.className = 'card-info';
             info.innerHTML =
-                '<h3>' + song.title + '</h3>' +
-                '<p><strong>Año:</strong> ' + song.year + '</p>' +
-                '<p><strong>Álbum:</strong> ' + song.album + '</p>';
+                '<h3>Colección Queen</h3>' +
+                '<p><strong>Escucha:</strong> usa el QR para reproducir</p>' +
+                '<p><strong>Objetivo:</strong> adivina año, título y álbum</p>';
 
             card.appendChild(qrWrap);
             card.appendChild(info);

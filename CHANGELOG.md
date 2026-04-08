@@ -14,6 +14,7 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 - Fallback visible para QR en la carta principal y en la colección imprimible cuando `QRCode.js` no está disponible.
 - Mensajes de estado más claros para errores, lentitud o interrupciones en la carga de previews de audio.
 - Descarte automático en la sesión de cartas con preview roto o inaccesible.
+- Contenido genérico sin spoilers en las cartas de la colección imprimible.
 
 ### Cambiado
 
@@ -22,6 +23,8 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 - Al volver a empezar una partida completada, la sesión se reinicia de forma limpia desde la pantalla principal.
 - Los botones de control de audio quedaron alineados de forma consistente, especialmente en móvil.
 - El panel de historial reserva altura desde el inicio para evitar saltos visuales de la carta principal.
+- La colección imprimible aprovecha mejor el ancho disponible en escritorio y mantiene una estética más integrada con el juego.
+- La maquetación de impresión centra mejor la rejilla de tarjetas en la hoja.
 
 ### Corregido
 
