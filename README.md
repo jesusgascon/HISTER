@@ -13,6 +13,7 @@ Juego web estático inspirado en Hitster para jugar con canciones de Queen. La a
 - Final de partida real al agotar el catálogo, con tarjeta especial de cierre.
 - Persistencia del estado de sesión y del final de partida tras recargar.
 - Manejo más robusto de errores de audio y tiempos de espera de previews remotos.
+- Descarte automático en la sesión de cartas cuyo preview no se puede cargar.
 - Cartas imprimibles con QR o fallback visible si el generador QR no está disponible.
 - Fondo de concierto aleatorio entre dos imágenes locales.
 - Diseño responsive para escritorio y móvil, con panel de historial estable.
@@ -57,6 +58,8 @@ La app depende de dos recursos externos:
 - Librería `QRCode.js` cargada desde CDN.
 
 Si falla un preview, la consola de juego muestra mensajes claros para reintentar o cambiar de canción. Si el generador QR no está disponible, el juego sigue funcionando y muestra un fallback visible con la URL del preview.
+
+Si una carta tiene un preview roto o inaccesible, esa carta se descarta automáticamente durante la sesión actual para que la partida pueda continuar sin bloqueos.
 
 ## Publicación en GitHub Pages
 

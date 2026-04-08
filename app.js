@@ -59,6 +59,7 @@ window.onload = function () {
     var qrInstance     = null;
     var cardsGenerated = false;
     var playedSongKeys = new Set();
+    var failedSongKeys = new Set();
     var progressTimer  = null;
     var audioLoadTimer = null;
     var filteredPool   = [];
@@ -231,6 +232,43 @@ window.onload = function () {
         setStatus(message, 'var(--error-red)');
     }
 
+    function getPlayedSongsInPoolCount() {
+        var count = 0;
+        for (var i = 0; i < filteredPool.length; i++) {
+            if (playedSongKeys.has(getSongKey(filteredPool[i]))) count++;
+        }
+        return count;
+    }
+
+    function getFailedSongsInPoolCount() {
+        var count = 0;
+        for (var i = 0; i < filteredPool.length; i++) {
+            if (failedSongKeys.has(getSongKey(filteredPool[i]))) count++;
+        }
+        return count;
+    }
+
+    function discardCurrentSongFromSession(message) {
+        if (!currentSong) {
+            handleAudioFailure(message);
+            return;
+        }
+
+        var songKey = getSongKey(currentSong);
+        failedSongKeys.add(songKey);
+        playedSongKeys.delete(songKey);
+        currentSongRevealed = true;
+        saveProgress();
+        updateStats();
+
+        if (getAvailableSongs().length === 0) {
+            showCompletionCard('unavailable');
+            return;
+        }
+
+        handleAudioFailure(message + ' Esta carta se descartará durante esta sesión.');
+    }
+
     function escapeHtml(value) {
         return String(value)
             .replace(/&/g, '&amp;')
@@ -345,11 +383,12 @@ window.onload = function () {
         }
     }
 
-    function showCompletionCard() {
+    function showCompletionCard(mode) {
+        var endMode = mode || 'completed';
         var totalCompleted = filteredPool.length;
         var currentLabel = activeEraBadge ? activeEraBadge.textContent.replace('Época: ', '') : 'Catálogo actual';
         gameCompleted = true;
-        completedFilter = filterSelect ? filterSelect.value : 'all';
+        completedFilter = endMode === 'completed' ? (filterSelect ? filterSelect.value : 'all') : null;
         saveProgress();
         pauseAudio();
         resetProgressBar();
@@ -357,20 +396,22 @@ window.onload = function () {
         currentSongRevealed = false;
         showSongCard({
             year: currentLabel,
-            title: totalCompleted + ' canciones únicas',
-            album: 'Vuelve al inicio y reinicia la sesión'
+            title: endMode === 'completed' ? (totalCompleted + ' canciones únicas') : 'No quedan previews jugables',
+            album: endMode === 'completed' ? 'Vuelve al inicio y reinicia la sesión' : 'Reinicia la sesión o prueba otro filtro'
         });
-        if (cardTitleEl) cardTitleEl.textContent = 'Juego Completado';
-        if (scanTextEl) scanTextEl.innerHTML = 'No quedan más tarjetas por sacar<br>en este catálogo.';
-        if (backTitleEl) backTitleEl.textContent = 'Fin de la partida';
+        if (cardTitleEl) cardTitleEl.textContent = endMode === 'completed' ? 'Juego Completado' : 'Sesión Interrumpida';
+        if (scanTextEl) scanTextEl.innerHTML = endMode === 'completed'
+            ? 'No quedan más tarjetas por sacar<br>en este catálogo.'
+            : 'Los previews restantes no están disponibles<br>en este momento.';
+        if (backTitleEl) backTitleEl.textContent = endMode === 'completed' ? 'Fin de la partida' : 'No se puede continuar';
         showAnswerLabels('Catálogo', 'Resultado', 'Siguiente paso');
         qrBox.innerHTML =
             '<div class="special-finish-panel">' +
                 '<div class="finish-crown">👑</div>' +
                 '<div class="finish-title">Queen</div>' +
-                '<div class="finish-subtitle">Catálogo Completado</div>' +
+                '<div class="finish-subtitle">' + (endMode === 'completed' ? 'Catálogo Completado' : 'Preview no disponible') + '</div>' +
                 '<div class="finish-divider"></div>' +
-                '<div class="finish-badge">FIN</div>' +
+                '<div class="finish-badge">' + (endMode === 'completed' ? 'FIN' : 'STOP') + '</div>' +
             '</div>';
         dashAudio.style.display = 'block';
         showAudioControls(false);
@@ -378,13 +419,19 @@ window.onload = function () {
             btnBackMenu.style.display = 'block';
             btnBackMenu.textContent = '🏠 VOLVER AL INICIO Y REINICIAR';
         }
-        setPlayButtonLocked(true, '🏁 JUEGO TERMINADO');
-        setStatus('🏁 Has completado todo el catálogo actual. Reinicia la sesión para volver a empezar.', 'var(--primary-gold)');
+        setPlayButtonLocked(true, endMode === 'completed' ? '🏁 JUEGO TERMINADO' : '⚠️ PREVIEW NO DISPONIBLE');
+        setStatus(
+            endMode === 'completed'
+                ? '🏁 Has completado todo el catálogo actual. Reinicia la sesión para volver a empezar.'
+                : '⚠️ No quedan previews jugables en este catálogo durante esta sesión. Reinicia o cambia de filtro.',
+            endMode === 'completed' ? 'var(--primary-gold)' : 'var(--error-red)'
+        );
     }
 
     function getAvailableSongs() {
         return filteredPool.filter(function(song) {
-            return !playedSongKeys.has(getSongKey(song));
+            var songKey = getSongKey(song);
+            return !playedSongKeys.has(songKey) && !failedSongKeys.has(songKey);
         });
     }
 
@@ -396,6 +443,7 @@ window.onload = function () {
 
     function resetSession() {
         playedSongKeys.clear();
+        failedSongKeys.clear();
         playedHistory = [];
         completedFilter = null;
         saveProgress();
@@ -432,11 +480,9 @@ window.onload = function () {
     // ── 7. Estadísticas de sesión ─────────────────────────────
     function updateStats() {
         // Cuántas de este pool específico ya se han jugado
-        var playedInPool = 0;
-        for (var i = 0; i < filteredPool.length; i++) {
-            if (playedSongKeys.has(getSongKey(filteredPool[i]))) playedInPool++;
-        }
-        var remaining = filteredPool.length - playedInPool;
+        var playedInPool = getPlayedSongsInPoolCount();
+        var failedInPool = getFailedSongsInPoolCount();
+        var remaining = filteredPool.length - playedInPool - failedInPool;
         if (statsPlayed)    statsPlayed.textContent    = playedInPool;
         if (statsRemaining) statsRemaining.textContent = Math.max(0, remaining);
     }
@@ -492,7 +538,11 @@ window.onload = function () {
         revealCurrentSong();
         var available = getAvailableSongs();
         if (available.length === 0) {
-            showCompletionCard();
+            if (getFailedSongsInPoolCount() > 0 && getPlayedSongsInPoolCount() < filteredPool.length) {
+                showCompletionCard('unavailable');
+            } else {
+                showCompletionCard('completed');
+            }
             return;
         }
 
@@ -598,7 +648,7 @@ window.onload = function () {
             return;
         }
         if (!currentSong || gameCompleted) return;
-        handleAudioFailure('⚠️ La carga del preview se interrumpió. Pulsa Play para reintentar o saca otra canción.');
+        discardCurrentSongFromSession('⚠️ La carga del preview se interrumpió.');
     });
 
     audio.addEventListener('error', function () {
@@ -609,7 +659,7 @@ window.onload = function () {
         if (code === 2) detail = ' Problema de red.';
         if (code === 3) detail = ' El archivo parece corrupto.';
         if (code === 4) detail = ' Formato o recurso no compatible.';
-        handleAudioFailure('⚠️ No se pudo cargar el preview.' + detail + ' Pulsa Play para reintentar o saca otra canción.');
+        discardCurrentSongFromSession('⚠️ No se pudo cargar el preview.' + detail);
     });
 
     audio.addEventListener('ended', function () {

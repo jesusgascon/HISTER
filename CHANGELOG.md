@@ -13,6 +13,7 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 - Persistencia del estado de partida completada tras recargar la página.
 - Fallback visible para QR en la carta principal y en la colección imprimible cuando `QRCode.js` no está disponible.
 - Mensajes de estado más claros para errores, lentitud o interrupciones en la carga de previews de audio.
+- Descarte automático en la sesión de cartas con preview roto o inaccesible.
 
 ### Cambiado
 
@@ -27,4 +28,5 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 - Continuación de la partida después de llegar al final del catálogo.
 - Restauración incoherente del estado al recargar tras completar un catálogo.
 - Estados muertos o poco claros cuando un preview remoto falla o tarda demasiado.
+- Bloqueo de la sesión por cartas con preview no reproducible.
 - Degradación silenciosa cuando falla la generación de códigos QR.
