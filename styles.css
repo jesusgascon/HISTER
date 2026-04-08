@@ -232,6 +232,120 @@ body::before {
     margin: 0 auto;
 }
 
+.qr-fallback {
+    width: 200px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 14px;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #fff9de 0%, #f0e0a0 100%);
+    border: 2px dashed rgba(70, 48, 0, 0.35);
+    color: #2a1a00;
+    text-align: center;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
+}
+
+.qr-fallback-compact {
+    width: 130px;
+    min-height: 130px;
+    padding: 10px 8px;
+    gap: 6px;
+    border-radius: 10px;
+}
+
+.qr-fallback-label {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.qr-fallback-url {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+}
+
+.qr-fallback-compact .qr-fallback-label {
+    font-size: 0.58rem;
+    letter-spacing: 1px;
+}
+
+.qr-fallback-compact .qr-fallback-url {
+    font-size: 0.5rem;
+    line-height: 1.25;
+}
+
+.special-finish-panel {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at top, rgba(255, 215, 0, 0.22), rgba(255, 215, 0, 0) 42%),
+        linear-gradient(145deg, #2f1904 0%, #120707 52%, #090204 100%);
+    border: 2px solid rgba(255, 215, 0, 0.45);
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.08),
+        0 10px 24px rgba(0,0,0,0.35),
+        0 0 18px rgba(255, 215, 0, 0.18);
+    color: #fff4c2;
+    text-align: center;
+    padding: 18px 14px;
+}
+
+.finish-crown {
+    font-size: 2rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.35));
+}
+
+.finish-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.25rem;
+    letter-spacing: 2px;
+    color: var(--primary-gold);
+    text-transform: uppercase;
+}
+
+.finish-subtitle {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.7);
+}
+
+.finish-divider {
+    width: 70%;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255,215,0,0), rgba(255,215,0,0.9), rgba(255,215,0,0));
+    margin: 4px 0;
+}
+
+.finish-badge {
+    min-width: 88px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 215, 0, 0.65);
+    background: linear-gradient(180deg, rgba(255,215,0,0.2), rgba(255,215,0,0.08));
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+    text-indent: 4px;
+    box-shadow: inset 0 0 12px rgba(255, 215, 0, 0.12);
+}
+
 .scan-text {
     font-size: 1rem;
     color: var(--text-muted);
@@ -354,6 +468,14 @@ body::before {
     background: linear-gradient(90deg, #e6c249 0%, #b89225 100%);
 }
 
+.btn-epic:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    filter: grayscale(0.2);
+}
+
 .btn-icon { font-size: 1.4rem; }
 
 /* Dashboard Audio: oculto por defecto, JS lo muestra */
@@ -406,6 +528,11 @@ body::before {
     font-weight: 600;
     transition: all 0.3s;
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
 }
 
 .btn-ctrl:hover {
@@ -456,6 +583,7 @@ body::before {
     border: 1px solid rgba(255, 215, 0, 0.18);
     border-radius: 16px;
     background: rgba(0, 0, 0, 0.28);
+    min-height: 320px;
 }
 
 .history-header {
@@ -488,6 +616,7 @@ body::before {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    height: 220px;
     max-height: 220px;
     overflow-y: auto;
     padding-right: 6px;
@@ -661,7 +790,12 @@ body::before {
     }
 
     .history-list {
+        height: 190px;
         max-height: 190px;
+    }
+
+    .history-panel {
+        min-height: 286px;
     }
 }
 
@@ -702,7 +836,12 @@ body::before {
     }
 
     .history-list {
+        height: 170px;
         max-height: 170px;
+    }
+
+    .history-panel {
+        min-height: 258px;
     }
 }
 
