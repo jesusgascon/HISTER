@@ -16,7 +16,17 @@ Juego web estático inspirado en Hitster para jugar con canciones de Queen. La a
 - Manejo más robusto de errores de audio y tiempos de espera de previews remotos.
 - Descarte automático en la sesión de cartas cuyo preview no se puede cargar.
 - Cartas imprimibles con QR o fallback visible si el generador QR no está disponible.
+- Cartas imprimibles numeradas para reproducir una carta física desde la pantalla principal si falla el QR.
 - Colección imprimible rediseñada para pantalla e impresión, sin mostrar spoilers de canción.
+- Reglas de puntuación configurables para año, título y álbum.
+- Marcador de equipos persistente con suma rápida por año, título, álbum o puntos manuales.
+- Filtros de dificultad por hits, cortes de álbum, instrumentales/soundtrack y modo difícil.
+- Playlist manual por álbum, tamaño de partida o lista de números de carta.
+- Opciones avanzadas colapsadas por defecto para mantener limpia la pantalla de inicio.
+- Modo presentador para evitar revelar la respuesta al tocar accidentalmente la carta.
+- Importación y exportación de sesión en JSON.
+- Diagnóstico desde la interfaz para comprobar previews remotos del catálogo activo.
+- Soporte PWA básico: instalación en móvil/escritorio y caché local de la app, imágenes y scripts.
 - Fondo de concierto aleatorio entre dos imágenes locales.
 - Diseño responsive para escritorio y móvil, con panel de historial estable.
 
@@ -24,12 +34,19 @@ Juego web estático inspirado en Hitster para jugar con canciones de Queen. La a
 
 - `index.html`: estructura de la aplicación.
 - `styles.css`: estilos visuales, impresión y responsive.
-- `app.js`: lógica del juego, audio, navegación, historial y fondo aleatorio.
-- `data.js`: catálogo de canciones y URLs de preview.
+- `js/app.js`: orquestación principal del juego, audio, navegación, historial y fondo aleatorio.
+- `js/catalog.js`: utilidades y validación del catálogo.
+- `js/qr-renderer.js`: generación de QR y fallback si falla la librería externa.
+- `js/print-cards.js`: generación de cartas imprimibles.
+- `data.js`: catálogo de canciones, dificultad explícita y URLs de preview.
+- `scripts/validate-catalog.js`: validación local del catálogo.
+- `scripts/validate-previews.js`: validación opcional de disponibilidad de previews.
+- `manifest.webmanifest`: metadatos de instalación PWA.
+- `sw.js`: caché offline parcial de recursos locales.
 - `CHANGELOG.md`: registro de cambios por versión.
-- `queen_logo.png`: imagen decorativa del proyecto.
-- `queen_concert_bg.png`: fondo principal.
-- `queen_concert_bg_alt.png`: fondo alternativo original/procedural.
+- `queen_logo.jpg`: imagen decorativa del proyecto.
+- `queen_concert_bg.jpg`: fondo principal.
+- `queen_concert_bg_alt.jpg`: fondo alternativo original/procedural.
 
 ## Uso local
 
@@ -41,6 +58,30 @@ python3 -m http.server 8000
 
 Después abre `http://localhost:8000`.
 
+Para revisar PWA, manifest y service worker sin errores de consola, usa siempre servidor local o GitHub Pages. Si abres `index.html` como `file://`, el navegador bloquea esas capacidades por seguridad.
+
+## Validación
+
+Puedes comprobar sintaxis JavaScript y consistencia básica del catálogo con:
+
+```bash
+npm test
+```
+
+La validación local comprueba campos obligatorios, dificultad (`hits`, `deep` o `instrumental`), claves duplicadas, URLs duplicadas y que los previews apunten al dominio esperado de Apple/iTunes. No descarga todos los audios; sirve para detectar errores de datos antes de publicar.
+
+Para comprobar disponibilidad real de los previews remotos:
+
+```bash
+npm run validate:previews
+```
+
+Este comando hace peticiones de red a Apple/iTunes y puede tardar o fallar por conectividad externa. Para probar solo una muestra:
+
+```bash
+npm run validate:previews -- --limit=10
+```
+
 ## Estado de la sesión
 
 La aplicación guarda automáticamente en `localStorage`:
@@ -48,9 +89,15 @@ La aplicación guarda automáticamente en `localStorage`:
 - Canciones ya usadas dentro del catálogo activo.
 - Historial de canciones reveladas.
 - Filtro por época seleccionado.
+- Filtros de dificultad, álbum, tamaño de partida y lista manual.
+- Reglas de puntuación.
+- Equipos y marcador.
+- Modo presentador.
 - Estado de partida completada si ya no quedan canciones disponibles en el filtro actual.
 
 Para empezar desde cero, usa `Reiniciar Sesión`.
+
+También puedes usar `Exportar sesión` para guardar progreso, reglas, playlist y marcador en JSON, o `Importar sesión` para restaurarlos en otro navegador.
 
 Si la partida ya terminó y vuelves a la pantalla principal, al empezar de nuevo el juego reinicia la sesión completa para limpiar las cartas usadas y reconstruir correctamente la cara frontal con su QR.
 
@@ -59,7 +106,7 @@ Si la partida ya terminó y vuelves a la pantalla principal, al empezar de nuevo
 La app depende de dos recursos externos:
 
 - Previews de audio remotos de Apple/iTunes.
-- Librería `QRCode.js` cargada desde CDN.
+- Librería `QRCode.js` cargada desde CDN con SRI.
 
 Si falla un preview, la consola de juego muestra mensajes claros para reintentar o cambiar de canción. Si el generador QR no está disponible, el juego sigue funcionando y muestra un fallback visible con la URL del preview.
 
@@ -72,6 +119,13 @@ La sección `Imprimir Colección` está pensada para mostrar todas las cartas de
 - En pantalla, las tarjetas mantienen una estética coherente con el juego.
 - En impresión, se simplifican para que salgan limpias y legibles en papel.
 - No muestran título, año ni álbum reales, para evitar spoilers antes de jugar.
+- Cada tarjeta muestra un número de carta. Si un QR falla, introduce ese número en `Usar carta impresa` dentro del modo escenario.
+
+## PWA y uso sin conexión
+
+La aplicación registra un service worker cuando se sirve por `http://localhost` o HTTPS. Esto cachea HTML, CSS, JavaScript e imágenes locales para abrir la app aunque la conexión falle.
+
+Los previews de audio y `QRCode.js` siguen siendo externos; si no hay conexión, la app puede abrirse, pero el audio remoto y la primera carga del generador QR pueden no estar disponibles.
 
 ## Publicación en GitHub Pages
 

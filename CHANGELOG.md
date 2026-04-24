@@ -4,6 +4,34 @@ Todos los cambios relevantes de este proyecto se documentan en este archivo.
 
 El formato sigue una línea simple inspirada en Keep a Changelog.
 
+## [Unreleased]
+
+### Añadido
+
+- Scripts de validación local del catálogo y validación opcional de previews remotos.
+- Módulos JS separados para catálogo, QR y cartas imprimibles.
+- Integridad SRI para la carga externa de `QRCode.js`.
+- Reglas configurables de puntuación para año, título y álbum.
+- Marcador de equipos persistente.
+- Filtros de dificultad por hits, cortes de álbum, instrumentales/soundtrack y modo difícil.
+- Modo playlist manual por álbum, número de cartas o lista de cartas.
+- Buscador de carta impresa por número, sin mostrar spoilers antes de revelar.
+- Campo `difficulty` explícito en cada canción del catálogo.
+- Modo presentador para bloquear el revelado accidental al tocar la carta.
+- Importación y exportación de sesión en JSON.
+- Diagnóstico de previews remotos desde la interfaz.
+- Soporte PWA básico con `manifest.webmanifest` y caché local mediante service worker.
+
+### Cambiado
+
+- Sincronizada la versión de `package.json` con `v1.1.0`.
+- Renombradas las imágenes JPEG de `.png` a `.jpg`.
+- Movidos estilos inline de `index.html` a `styles.css`.
+- Eliminada la carga duplicada de Google Fonts.
+- Las cartas imprimibles ahora incluyen número visible para fallback físico.
+- Las opciones de playlist, dificultad, reglas, carta impresa y sesión quedan dentro de `Opciones avanzadas`, cerrado por defecto.
+- Actualizada la versión de caché PWA para servir la interfaz más reciente.
+
 ## [1.1.0] - 2026-04-08
 
 ### Añadido

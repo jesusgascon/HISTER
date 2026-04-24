@@ -1,14 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@400;600;800&display=swap');
-
 :root {
     --primary-gold: #FFD700;
     --primary-gold-dim: #b89b14;
     --accent-purple: #8100ff;
     --dark-overlay: rgba(5, 2, 10, 0.85);
-    --glass-bg: rgba(20, 5, 30, 0.65);
+    --glass-bg: rgba(20, 5, 30, 0.78);
     --glass-border: rgba(255, 215, 0, 0.25);
     --text-main: #FFFFFF;
-    --text-muted: #B0A8B9;
+    --text-muted: #D4CADB;
     --success-green: #00E676;
     --error-red: #FF3D00;
 }
@@ -23,12 +21,32 @@
 }
 
 body {
-    background: #05020a url('queen_concert_bg.png') no-repeat center center fixed;
+    background: #05020a url('queen_concert_bg.jpg') no-repeat center center fixed;
     background-size: cover;
     color: var(--text-main);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+}
+
+main {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+img,
+button,
+select,
+input {
+    max-width: 100%;
+}
+
+button,
+select,
+input {
+    min-width: 0;
 }
 
 /* Oscurecer un poco el fondo de rock para que la UI destaque */
@@ -36,7 +54,7 @@ body::before {
     content: "";
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(5,2,10,0.95) 100%);
+    background: radial-gradient(circle at center, rgba(0,0,0,0.52) 0%, rgba(5,2,10,0.97) 100%);
     z-index: -1;
 }
 
@@ -69,6 +87,8 @@ body::before {
     transition: all 0.3s;
     text-transform: uppercase;
     letter-spacing: 2px;
+    white-space: nowrap;
+    overflow-wrap: anywhere;
 }
 
 .nav-links button:hover, .nav-links button.active {
@@ -93,7 +113,8 @@ body::before {
     max-width: 1500px;
     margin: 0 auto;
     width: 100%;
-    align-items: center;
+    min-width: 0;
+    align-items: start;
     padding: 2rem 3rem;
     flex: 1;
 }
@@ -119,6 +140,11 @@ body::before {
     align-items: center;
 }
 
+.epic-grid > *,
+#screen-game > * {
+    min-width: 0;
+}
+
 @media (max-width: 900px) {
     #screen-game,
     .epic-grid {
@@ -134,19 +160,244 @@ body::before {
 .stage-left {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 500px;
+    min-width: 0;
+    width: 100%;
 }
 
 .empty-state {
+    width: min(100%, 720px);
+    min-width: 0;
     text-align: center;
-    opacity: 0.6;
+    opacity: 1;
 }
 
 .empty-state h2 {
     font-family: 'Cinzel', serif;
     color: var(--primary-gold);
     margin-bottom: 10px;
+}
+
+.empty-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.65rem, 4vw, 2.35rem);
+    color: var(--primary-gold);
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    text-wrap: balance;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.empty-copy {
+    width: min(100%, 640px);
+    margin: 0 auto 1.5rem;
+    color: rgba(255,255,255,0.86);
+    font-size: 1.1rem;
+    line-height: 1.45;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+    text-wrap: balance;
+}
+
+.btn-reset-session {
+    width: auto;
+    margin-top: 10px;
+    padding: 8px 15px;
+    font-size: 0.8rem;
+}
+
+.filter-block {
+    margin-top: 20px;
+    width: 100%;
+}
+
+.filter-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.styled-select {
+    display: block;
+    margin: 5px auto 0;
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: 1px solid var(--primary-gold-dim);
+    max-width: 100%;
+}
+
+.advanced-options {
+    width: 100%;
+    margin: 1rem 0 0;
+    text-align: left;
+}
+
+.advanced-options > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 215, 0, 0.34);
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(255, 215, 0, 0.13), rgba(129, 0, 255, 0.13)),
+        rgba(8, 3, 14, 0.82);
+    color: var(--primary-gold);
+    cursor: pointer;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.24);
+}
+
+.advanced-options > summary::-webkit-details-marker {
+    display: none;
+}
+
+.advanced-options > summary::after {
+    content: "+";
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 215, 0, 0.42);
+    display: grid;
+    place-items: center;
+    color: #05020a;
+    background: var(--primary-gold);
+    line-height: 1;
+}
+
+.advanced-options[open] > summary::after {
+    content: "-";
+}
+
+.advanced-options-content {
+    margin-top: 12px;
+}
+
+.advanced-options-content .rules-panel:first-child,
+.advanced-options-content .lookup-panel:first-child {
+    margin-top: 0;
+}
+
+.rules-panel,
+.lookup-panel {
+    width: min(100%, 520px);
+    margin: 18px auto 0;
+    padding: 16px;
+    border: 1px solid rgba(255, 215, 0, 0.28);
+    border-radius: 16px;
+    background: rgba(8, 3, 14, 0.74);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+    text-align: left;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.session-tool-grid {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.import-session-label {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+.import-session-label input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.rules-panel h3,
+.lookup-panel h3,
+.diagnostics-header h3 {
+    color: var(--text-main);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rules-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 12px;
+    color: rgba(255,255,255,0.82);
+    font-size: 0.85rem;
+}
+
+.rules-grid .styled-select {
+    width: 100%;
+    margin: 6px 0 0;
+}
+
+.rule-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rules-summary,
+.lookup-status,
+.diagnostics-status,
+.print-helper {
+    margin-top: 10px;
+    color: rgba(255,255,255,0.82);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.lookup-controls {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.card-number-input {
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-weight: 700;
+    max-width: 100%;
+}
+
+.btn-mini {
+    border: 1px solid rgba(255, 215, 0, 0.45);
+    border-radius: 10px;
+    background: rgba(255, 215, 0, 0.12);
+    color: var(--primary-gold);
+    padding: 10px 12px;
+    cursor: pointer;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-mini:hover:not(:disabled) {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: var(--primary-gold);
+}
+
+.btn-mini:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 /* La carta comienza oculta via JS */
@@ -423,9 +674,13 @@ body::before {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-width: 0;
+    width: 100%;
 }
 
 .glass-panel {
+    width: 100%;
+    min-width: 0;
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -441,10 +696,12 @@ body::before {
     color: var(--text-main);
     margin-bottom: 2rem;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    overflow-wrap: anywhere;
 }
 
 .btn-epic {
     width: 100%;
+    min-width: 0;
     background: linear-gradient(90deg, #d4af37 0%, #aa8621 100%);
     color: #000;
     border: none;
@@ -460,6 +717,8 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: center;
+    text-align: center;
+    overflow-wrap: anywhere;
     gap: 10px;
 }
 
@@ -511,6 +770,53 @@ body::before {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.active-era-badge {
+    display: inline-block;
+    margin-bottom: 15px;
+    padding: 4px 10px;
+    border: 1px solid var(--primary-gold);
+    border-radius: 12px;
+    background: rgba(255,215,0,0.1);
+    color: var(--primary-gold);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.active-card-number {
+    display: none;
+    margin-left: 8px;
+    margin-bottom: 15px;
+    padding: 4px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-main);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.is-hidden {
+    display: none;
+}
+
+.progress-bar-container {
+    display: none;
+    position: relative;
+    height: 6px;
+    margin-top: 15px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.1);
+}
+
+.progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--success-green);
+    box-shadow: 0 0 8px var(--success-green);
+    transition: width 0.2s linear;
 }
 
 .audio-controls {
@@ -576,6 +882,13 @@ body::before {
     border-color: #fff;
     color: #fff;
     background: rgba(255,255,255,0.05);
+}
+
+.btn-back-menu {
+    margin-top: 15px;
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .history-panel {
@@ -648,12 +961,134 @@ body::before {
     line-height: 1.4;
 }
 
+.diagnostics-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(255, 215, 0, 0.18);
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.diagnostics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.diagnostics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 130px;
+    margin-top: 10px;
+    overflow-y: auto;
+    color: var(--error-red);
+    font-size: 0.82rem;
+    list-style-position: inside;
+}
+
+.scoreboard-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+    min-width: 0;
+    border: 1px solid rgba(255, 215, 0, 0.18);
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.scoreboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.scoreboard-header h3 {
+    color: var(--text-main);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.team-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.scoreboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.team-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-main);
+    cursor: pointer;
+    text-align: left;
+}
+
+.team-row strong {
+    color: var(--primary-gold);
+    font-size: 1.1rem;
+}
+
+.is-active-team {
+    border-color: rgba(255, 215, 0, 0.55);
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.score-actions {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+    min-width: 0;
+}
+
 /* =========================================
    PRINT SCREEN
 ========================================= */
 .printable-panel {
     text-align: center;
     width: min(100%, 1680px);
+    margin: 0 auto;
+}
+
+.printable-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.printable-copy {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.btn-print {
+    max-width: 300px;
+    margin: 0 auto 2rem;
+    display: flex;
+}
+
+.print-helper {
+    width: min(100%, 680px);
     margin: 0 auto;
 }
 
@@ -685,6 +1120,19 @@ body::before {
     align-items: center;
     gap: 14px;
     min-height: 100%;
+}
+
+.card-number-badge {
+    align-self: flex-start;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.28);
+    color: var(--primary-gold);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .card::before {
@@ -768,15 +1216,34 @@ body::before {
     font-weight: 800;
 }
 
+.app-footer {
+    margin-top: 20px;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.footer-note {
+    margin-bottom: 5px;
+}
+
 
 @media (max-width: 900px) {
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
     body {
         background-attachment: scroll;
     }
 
     .app-header {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
         padding: 1rem;
     }
 
@@ -786,18 +1253,51 @@ body::before {
 
     .nav-links {
         display: flex;
+        flex-direction: column;
         flex-wrap: wrap;
+        align-items: stretch;
         justify-content: center;
-        gap: 12px;
+        gap: 10px 14px;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
     }
 
     .nav-links button {
+        flex: 0 1 auto;
+        width: 100%;
         margin-left: 0;
-        font-size: 0.85rem;
+        font-size: 0.78rem;
+        letter-spacing: 1.4px;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.35;
     }
 
     .stage-left {
         min-height: auto;
+        width: 100%;
+    }
+
+    .empty-state {
+        width: 100%;
+        max-width: calc(100vw - 2rem);
+    }
+
+    .empty-icon {
+        font-size: 3.25rem;
+    }
+
+    .empty-copy {
+        font-size: 1rem;
+    }
+
+    .rules-panel,
+    .lookup-panel {
+        width: 100%;
+    }
+
+    .advanced-options {
         width: 100%;
     }
 
@@ -861,6 +1361,25 @@ body::before {
         gap: 10px;
     }
 
+    .lookup-controls,
+    .session-tool-grid,
+    .team-form,
+    .score-actions,
+    .diagnostics-header {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .btn-mini,
+    .card-number-input,
+    .styled-select {
+        width: 100%;
+    }
+
+    .btn-reset-session {
+        width: 100%;
+    }
+
     .btn-epic,
     .btn-reveal,
     .btn-ctrl {
@@ -890,6 +1409,53 @@ body::before {
     #screen-game,
     #screen-cards {
         padding: 1rem;
+        width: 100%;
+        max-width: 100vw;
+    }
+
+    .app-header {
+        padding: 0.9rem 0.75rem;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px 12px;
+    }
+
+    .nav-links button {
+        width: 100%;
+        font-size: 0.72rem;
+        letter-spacing: 1.1px;
+        max-width: none;
+    }
+
+    .empty-title {
+        font-size: clamp(1.45rem, 8vw, 2rem);
+        line-height: 1.14;
+        max-width: 100%;
+        overflow-wrap: break-word;
+    }
+
+    .empty-copy {
+        font-size: 0.94rem;
+    }
+
+    .session-stats p,
+    .rules-summary,
+    .lookup-status,
+    .diagnostics-status,
+    .print-helper {
+        font-size: 0.82rem;
+    }
+
+    .rules-panel,
+    .lookup-panel,
+    .advanced-options > summary,
+    .scoreboard-panel,
+    .history-panel,
+    .diagnostics-panel {
+        padding: 0.9rem;
     }
 
     .flip-card-container {
@@ -957,6 +1523,11 @@ body::before {
         padding: 12px;
         font-size: 0.82rem;
     }
+
+    .btn-mini {
+        padding: 10px;
+        font-size: 0.78rem;
+    }
 }
 
 /* =========================================
@@ -976,7 +1547,7 @@ body::before {
     }
     
     body::before { display: none !important; }
-    .app-header, .stage-right, #btn-print, .printable-panel h2, .printable-panel p {
+    .app-header, .stage-right, #btn-print, .printable-panel > h2, .printable-panel > p, .print-helper {
         display: none !important;
     }
     
@@ -1052,5 +1623,11 @@ body::before {
 
     .card-info p strong {
         color: #000 !important;
+    }
+
+    .card-number-badge {
+        background: #fff !important;
+        color: #000 !important;
+        border-color: #333 !important;
     }
 }

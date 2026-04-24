@@ -11,13 +11,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="queen_logo.png">
+    <link rel="icon" href="queen_logo.jpg">
+    <meta name="theme-color" content="#05020a">
 </head>
 <body>
 
     <header class="app-header">
         <div class="logo">
-            <img src="queen_logo.png" alt="Hitster Queen Edition Logo">
+            <img src="queen_logo.jpg" alt="Hitster Queen Edition Logo">
         </div>
         <div class="nav-links">
             <button id="nav-game">Modo Escenario</button>
@@ -35,24 +36,25 @@
                 <!-- Placeholder inicial -->
                 <div id="empty-state" class="empty-state">
                     <div class="empty-icon">👑</div>
-                    <h2 style="font-family:'Cinzel', serif; font-size: 2.2rem; color: var(--primary-gold); margin-bottom: 0.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">The Show Must Go On</h2>
-                    <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 1.5rem;">Coge el micrófono y pulsa "Sacar Nueva Canción" para poner a prueba tu memoria musical.<br>
+                    <h2 class="empty-title">The Show Must Go On</h2>
+                    <p class="empty-copy">Coge el micrófono y pulsa "Sacar Nueva Canción" para poner a prueba tu memoria musical.<br>
                     Catálogo: <span id="total-songs-count" class="gold-text">0</span> pistas en total.</p>
                     
                     <div class="session-stats">
                         <p>Progreso de sesión: <span id="stat-played" class="gold-text">0</span> jugadas | <span id="stat-remaining">0</span> restantes</p>
-                        <button id="btn-reset-session" class="btn-reveal" style="padding: 8px 15px; font-size: 0.8rem; margin-top: 10px; width: auto;">🔄 Reiniciar Sesión</button>
+                        <button id="btn-reset-session" class="btn-reveal btn-reset-session">🔄 Reiniciar Sesión</button>
                     </div>
 
-                    <div style="margin-top: 20px;">
-                        <label for="filter-era" style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Filtrar por época:</label>
-                        <select id="filter-era" class="styled-select" style="display: block; margin: 5px auto 0; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid var(--primary-gold-dim);">
+                    <div class="filter-block">
+                        <label for="filter-era" class="filter-label">Filtrar por época:</label>
+                        <select id="filter-era" class="styled-select">
                             <option value="all">Toda la Discografía (1973-1995)</option>
                             <option value="1973-1979">Los años 70 (1973-1979)</option>
                             <option value="1980-1989">Los gloriosos 80s (1980-1989)</option>
                             <option value="1990-1995">El legado final (1990-1995)</option>
                         </select>
                     </div>
+
                 </div>
 
                 <!-- La Carta (JS la muestra cuando hay canción) -->
@@ -66,12 +68,12 @@
                                 <div id="game-qr-code"></div>
                             </div>
                             <p class="scan-text">Escanea el QR para escuchar<br>o usa los controles de la derecha</p>
-                            <img src="queen_logo.png" alt="Queen" class="card-logo">
+                            <img src="queen_logo.jpg" alt="Queen" class="card-logo">
                         </div>
 
                         <!-- Trasera -->
                         <div class="flip-card-back">
-                            <img src="queen_logo.png" alt="Queen" class="card-logo-back">
+                            <img src="queen_logo.jpg" alt="Queen" class="card-logo-back">
                             <h3 class="back-title">¡Respuesta!</h3>
                             <div class="answer-item">
                                 <span class="answer-label">Año de lanzamiento</span>
@@ -99,10 +101,124 @@
                     <button id="btn-play" class="btn-epic">
                         🎤 SACAR NUEVA CANCIÓN
                     </button>
+
+                    <details class="advanced-options">
+                        <summary>Opciones avanzadas</summary>
+                        <div class="advanced-options-content">
+                            <section class="rules-panel" aria-labelledby="playlist-title">
+                                <h3 id="playlist-title">Playlist y dificultad</h3>
+                                <div class="rules-grid">
+                                    <label>
+                                        Dificultad
+                                        <select id="filter-difficulty" class="styled-select">
+                                            <option value="all">Todas las canciones</option>
+                                            <option value="hits">Hits conocidos</option>
+                                            <option value="deep">Cortes de álbum</option>
+                                            <option value="instrumental">Instrumentales / soundtrack</option>
+                                            <option value="hard">Modo difícil</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Álbum
+                                        <select id="filter-album" class="styled-select">
+                                            <option value="all">Todos los álbumes</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Tamaño de partida
+                                        <select id="playlist-size" class="styled-select">
+                                            <option value="all">Todo el catálogo activo</option>
+                                            <option value="20">20 cartas</option>
+                                            <option value="40">40 cartas</option>
+                                            <option value="60">60 cartas</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        Cartas manuales
+                                        <input id="manual-card-list" class="card-number-input" type="text" placeholder="Ej: 1, 5, 10-20">
+                                    </label>
+                                </div>
+                                <p id="playlist-summary" class="rules-summary">Usando todo el catálogo activo.</p>
+                            </section>
+
+                            <section class="rules-panel" aria-labelledby="rules-title">
+                                <h3 id="rules-title">Reglas de puntuación</h3>
+                                <div class="rules-grid">
+                                    <label>
+                                        Año
+                                        <select id="rule-year" class="styled-select">
+                                            <option value="exact">Exacto: 3 puntos</option>
+                                            <option value="margin-1">±1 año: 2 puntos</option>
+                                            <option value="margin-2">±2 años: 1 punto</option>
+                                            <option value="timeline">Solo ordenar cronológicamente</option>
+                                            <option value="off">Sin puntuar año</option>
+                                        </select>
+                                    </label>
+                                    <label class="rule-check">
+                                        <input id="rule-title" type="checkbox" checked>
+                                        Título: 2 puntos
+                                    </label>
+                                    <label class="rule-check">
+                                        <input id="rule-album" type="checkbox" checked>
+                                        Álbum: 1 punto
+                                    </label>
+                                </div>
+                                <p id="rules-summary" class="rules-summary">Año exacto, título y álbum.</p>
+                            </section>
+
+                            <section class="lookup-panel" aria-labelledby="lookup-title">
+                                <h3 id="lookup-title">Usar carta impresa</h3>
+                                <div class="lookup-controls">
+                                    <input id="printed-card-number" class="card-number-input" type="number" min="1" inputmode="numeric" placeholder="Nº de carta">
+                                    <button id="btn-play-card-number" class="btn-mini">Reproducir</button>
+                                </div>
+                                <p id="card-lookup-status" class="lookup-status">Introduce el número visible en la carta física.</p>
+                            </section>
+
+                            <section class="rules-panel" aria-labelledby="session-tools-title">
+                                <h3 id="session-tools-title">Sesión</h3>
+                                <div class="session-tool-grid">
+                                    <label class="rule-check">
+                                        <input id="presenter-mode" type="checkbox">
+                                        Modo presentador: revelar solo con botón
+                                    </label>
+                                    <button id="btn-export-session" class="btn-mini">Exportar sesión</button>
+                                    <label class="btn-mini import-session-label">
+                                        Importar sesión
+                                        <input id="import-session-file" type="file" accept="application/json">
+                                    </label>
+                                </div>
+                                <p id="session-io-status" class="rules-summary">Guarda o restaura progreso, reglas y marcador.</p>
+                            </section>
+                        </div>
+                    </details>
+
+                    <section class="scoreboard-panel" aria-labelledby="scoreboard-title">
+                        <div class="scoreboard-header">
+                            <div>
+                                <p class="dash-subtitle">Marcador</p>
+                                <h3 id="scoreboard-title">Equipos</h3>
+                            </div>
+                            <span id="active-team-label" class="history-count">—</span>
+                        </div>
+                        <div class="team-form">
+                            <input id="team-name-input" class="card-number-input" type="text" placeholder="Nombre del equipo">
+                            <button id="btn-add-team" class="btn-mini">Añadir</button>
+                        </div>
+                        <div id="scoreboard-list" class="scoreboard-list"></div>
+                        <div class="score-actions">
+                            <button id="btn-score-year" class="btn-mini">+ Año</button>
+                            <button id="btn-score-title" class="btn-mini">+ Título</button>
+                            <button id="btn-score-album" class="btn-mini">+ Álbum</button>
+                            <button id="btn-score-plus-one" class="btn-mini">+1</button>
+                            <button id="btn-score-minus-one" class="btn-mini">-1</button>
+                        </div>
+                    </section>
                     
                     <!-- Audio oculto; JS lo muestra al sacar canción -->
                     <div id="audio-dashboard" class="audio-dashboard">
-                        <div id="active-era-badge" style="font-size: 0.75rem; color: var(--primary-gold); border: 1px solid var(--primary-gold); display: inline-block; padding: 4px 10px; border-radius: 12px; margin-bottom: 15px; text-transform: uppercase; background: rgba(255,215,0,0.1);">Época: Toda la Discografía</div>
+                        <div id="active-era-badge" class="active-era-badge">Época: Toda la Discografía</div>
+                        <div id="active-card-number" class="active-card-number">Carta —</div>
                         
                         <p class="dash-subtitle">Reproducción activa</p>
                         <div id="audio-status" class="status-indicator">—</div>
@@ -113,11 +229,11 @@
                         <div class="audio-controls">
                             <button id="btn-audio-restart" class="btn-ctrl" title="Reiniciar">🔄 Reiniciar</button>
                             <button id="btn-audio-pause"   class="btn-ctrl btn-main" title="Pausar">⏸ Pausa</button>
-                            <button id="btn-audio-resume"  class="btn-ctrl btn-main" title="Reproducir" style="display:none">▶ Play</button>
+                            <button id="btn-audio-resume"  class="btn-ctrl btn-main is-hidden" title="Reproducir">▶ Play</button>
                         </div>
                         
-                        <div id="audio-progress-bar" class="progress-bar-container" style="display: none; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 15px; overflow: hidden; position: relative;">
-                            <div id="audio-progress-fill" style="width: 0%; height: 100%; background: var(--success-green); transition: width 0.2s linear; box-shadow: 0 0 8px var(--success-green);"></div>
+                        <div id="audio-progress-bar" class="progress-bar-container">
+                            <div id="audio-progress-fill" class="progress-bar-fill"></div>
                         </div>
                         
                         <div class="dash-separator"></div>
@@ -126,7 +242,7 @@
                             ↪ GIRAR CARTA — VER RESPUESTA
                         </button>
                         
-                        <button id="btn-back-menu" class="btn-reveal" style="margin-top: 15px; border-color: rgba(255,255,255,0.2); color: var(--text-muted); font-size: 0.85rem;">
+                        <button id="btn-back-menu" class="btn-reveal btn-back-menu">
                             🏠 VOLVER AL MENÚ DE INICIO
                         </button>
 
@@ -142,6 +258,18 @@
                                 <li class="history-empty">Todavía no ha salido ninguna canción.</li>
                             </ol>
                         </section>
+
+                        <section class="diagnostics-panel" aria-labelledby="diagnostics-title">
+                            <div class="diagnostics-header">
+                                <div>
+                                    <p class="dash-subtitle">Diagnóstico</p>
+                                    <h3 id="diagnostics-title">Previews remotos</h3>
+                                </div>
+                                <button id="btn-check-previews" class="btn-mini">Comprobar catálogo activo</button>
+                            </div>
+                            <p id="preview-check-status" class="diagnostics-status">Sin comprobar.</p>
+                            <ol id="preview-check-results" class="diagnostics-list"></ol>
+                        </section>
                     </div>
                 </div>
             </div>
@@ -150,25 +278,31 @@
         <!-- PANTALLA DE IMPRESIÓN (oculta por defecto) -->
         <section id="screen-cards">
             <div class="glass-panel printable-panel">
-                <h2 style="font-family:'Cinzel',serif; font-size:1.8rem; margin-bottom:0.5rem;">Colección Oficial Queen</h2>
-                <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+                <h2 class="printable-title">Colección Oficial Queen</h2>
+                <p class="printable-copy">
                     <span id="total-songs-count-2" class="gold-text">0</span> pistas listas para imprimir
                 </p>
-                <button id="btn-print" class="btn-epic" style="max-width:300px; margin:0 auto 2rem auto; display:flex;">
+                <button id="btn-print" class="btn-epic btn-print">
                     🖨️ Imprimir Cartas
                 </button>
+                <div class="print-helper">
+                    Cada carta incluye un número visible. Si un QR impreso falla, vuelve al modo escenario e introduce ese número en "Usar carta impresa".
+                </div>
                 <div id="cards-container" class="cards-grid"></div>
             </div>
         </section>
     </main>
 
-    <footer style="text-align: center; color: rgba(255, 255, 255, 0.4); font-size: 0.75rem; padding: 20px; margin-top: 20px;">
-        <p style="margin-bottom: 5px;">👑 Un humilde tributo creado sin ánimo de lucro.</p>
+    <footer class="app-footer">
+        <p class="footer-note">👑 Un humilde tributo creado sin ánimo de lucro.</p>
         <p>Toda la música, portadas y marcas comerciales pertenecen a <strong>Queen Productions Ltd.</strong> y Universal Music Group. We Still Love You.</p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="data.js"></script>
-    <script src="app.js"></script>
+    <script src="js/catalog.js"></script>
+    <script src="js/qr-renderer.js"></script>
+    <script src="js/print-cards.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

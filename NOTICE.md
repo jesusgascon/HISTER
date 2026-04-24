@@ -11,7 +11,7 @@ Este repositorio contiene una aplicación web fan-made para jugar con canciones 
 
 ## Imágenes
 
-- `queen_concert_bg_alt.png` es una imagen original procedural generada para este proyecto, sin logos ni personas reales reconocibles.
+- `queen_concert_bg_alt.jpg` es una imagen original procedural generada para este proyecto, sin logos ni personas reales reconocibles.
 - El resto de imágenes deben usarse solo si tienes derecho a publicarlas en tu repositorio público.
 
 ## Licencia
