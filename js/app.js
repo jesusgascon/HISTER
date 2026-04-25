@@ -75,8 +75,11 @@ window.onload = function () {
     var sessionIoStatus = document.getElementById('session-io-status');
     var teamNameInput = document.getElementById('team-name-input');
     var btnAddTeam = document.getElementById('btn-add-team');
+    var btnRenameTeam = document.getElementById('btn-rename-team');
+    var btnDeleteTeam = document.getElementById('btn-delete-team');
     var scoreboardList = document.getElementById('scoreboard-list');
     var activeTeamLabel = document.getElementById('active-team-label');
+    var advancedOptions = document.querySelector('.advanced-options');
     var btnScoreYear = document.getElementById('btn-score-year');
     var btnScoreTitle = document.getElementById('btn-score-title');
     var btnScoreAlbum = document.getElementById('btn-score-album');
@@ -87,10 +90,17 @@ window.onload = function () {
     var backTitleEl    = activeCard ? activeCard.querySelector('.back-title') : null;
     var answerLabels   = activeCard ? activeCard.querySelectorAll('.answer-label') : [];
     var audioControls  = document.querySelector('.audio-controls');
+    var initialOnlyPanels = document.querySelectorAll('.initial-only-panel');
+    var cardsContainer = document.getElementById('cards-container');
+    var printBuildStatus = document.getElementById('print-build-status');
+    var printBuildTitle = document.getElementById('print-build-title');
+    var printBuildCopy = document.getElementById('print-build-copy');
+    var printBuildFill = document.getElementById('print-build-fill');
 
     // ── 4. Estado (con almacenamiento local) ─────────────────
     var currentSong    = null;
     var cardsGenerated = false;
+    var cardsGenerating = false;
     var playedSongKeys = new Set();
     var failedSongKeys = new Set();
     var progressTimer  = null;
@@ -103,6 +113,8 @@ window.onload = function () {
     var completedFilter = null;
     var teams = [];
     var activeTeamId = null;
+    var playlistSeed = HisterPlaylist.createSeed();
+    var activeDiagnostics = null;
     var qrRenderer = HisterQrRenderer.create({
         setStatus: setStatus,
         isGameCompleted: function () { return gameCompleted; }
@@ -152,7 +164,9 @@ window.onload = function () {
         }
         var savedFilter = localStorage.getItem('hister_queen_filter');
         if (savedFilter && filterSelect) {
-            filterSelect.value = savedFilter;
+            filterSelect.value = Array.from(filterSelect.options).some(function(option) {
+                return option.value === savedFilter;
+            }) ? savedFilter : 'all';
         }
         var savedCompletedFilter = localStorage.getItem('hister_queen_completed_filter');
         if (savedCompletedFilter) {
@@ -162,6 +176,10 @@ window.onload = function () {
         if (savedRules) {
             applyRules(JSON.parse(savedRules));
         }
+        var savedPlaylistSeed = localStorage.getItem('hister_queen_playlist_seed');
+        if (savedPlaylistSeed) {
+            playlistSeed = HisterSession.cleanText(savedPlaylistSeed, playlistSeed, 80);
+        }
         var savedPlaylist = localStorage.getItem('hister_queen_playlist');
         if (savedPlaylist) {
             applyPlaylistSettings(JSON.parse(savedPlaylist));
@@ -169,8 +187,11 @@ window.onload = function () {
         var savedTeams = localStorage.getItem('hister_queen_teams');
         if (savedTeams) {
             var parsedTeams = JSON.parse(savedTeams);
-            teams = Array.isArray(parsedTeams.teams) ? parsedTeams.teams : [];
+            teams = HisterSession.normalizeTeams(parsedTeams.teams);
             activeTeamId = parsedTeams.activeTeamId || (teams[0] && teams[0].id) || null;
+            if (!teams.some(function(team) { return team.id === activeTeamId; })) {
+                activeTeamId = teams[0] ? teams[0].id : null;
+            }
         }
         var savedPresenter = localStorage.getItem('hister_queen_presenter_mode');
         if (presenterMode && savedPresenter) {
@@ -195,6 +216,7 @@ window.onload = function () {
             }
             localStorage.setItem('hister_queen_rules', JSON.stringify(getRules()));
             localStorage.setItem('hister_queen_playlist', JSON.stringify(getPlaylistSettings()));
+            localStorage.setItem('hister_queen_playlist_seed', playlistSeed);
             localStorage.setItem('hister_queen_teams', JSON.stringify({ teams: teams, activeTeamId: activeTeamId }));
             if (presenterMode) {
                 localStorage.setItem('hister_queen_presenter_mode', String(presenterMode.checked));
@@ -211,7 +233,7 @@ window.onload = function () {
     }
 
     function applyRules(rules) {
-        if (!rules) return;
+        rules = HisterSession.normalizeRules(rules);
         if (ruleYear && rules.year) ruleYear.value = rules.year;
         if (ruleTitle && typeof rules.title === 'boolean') ruleTitle.checked = rules.title;
         if (ruleAlbum && typeof rules.album === 'boolean') ruleAlbum.checked = rules.album;
@@ -245,9 +267,13 @@ window.onload = function () {
     }
 
     function applyPlaylistSettings(settings) {
-        if (!settings) return;
+        settings = HisterSession.normalizePlaylist(settings);
         if (difficultySelect && settings.difficulty) difficultySelect.value = settings.difficulty;
-        if (albumSelect && settings.album) albumSelect.value = settings.album;
+        if (albumSelect && settings.album) {
+            albumSelect.value = Array.from(albumSelect.options).some(function(option) {
+                return option.value === settings.album;
+            }) ? settings.album : 'all';
+        }
         if (playlistSizeSelect && settings.size) playlistSizeSelect.value = settings.size;
         if (manualCardList && typeof settings.manualCards === 'string') manualCardList.value = settings.manualCards;
     }
@@ -272,15 +298,23 @@ window.onload = function () {
         var settings = getPlaylistSettings();
         var manualCount = HisterCatalog.parseCardList(settings.manualCards, queenSongs.length).length;
         var parts = [];
-        if (settings.difficulty !== 'all') parts.push('Dificultad: ' + difficultySelect.options[difficultySelect.selectedIndex].text);
-        if (settings.album !== 'all') parts.push('Álbum: ' + settings.album);
-        if (settings.size !== 'all') parts.push(settings.size + ' cartas');
-        if (manualCount) parts.push(manualCount + ' cartas manuales');
+        if (manualCount) {
+            parts.push(manualCount + ' cartas manuales');
+            parts.push('los filtros avanzados no se aplican a esta lista');
+        } else {
+            if (settings.difficulty !== 'all') parts.push('Dificultad: ' + difficultySelect.options[difficultySelect.selectedIndex].text);
+            if (settings.album !== 'all') parts.push('Álbum: ' + settings.album);
+            if (settings.size !== 'all') parts.push(settings.size + ' cartas aleatorias');
+        }
         playlistSummary.textContent = parts.length ? parts.join(' · ') : 'Usando todo el catálogo activo.';
     }
 
     function getActiveCatalogKey() {
-        return (filterSelect ? filterSelect.value : 'all') + '::' + JSON.stringify(getPlaylistSettings());
+        return (filterSelect ? filterSelect.value : 'all') + '::' + JSON.stringify(getPlaylistSettings()) + '::' + playlistSeed;
+    }
+
+    function refreshPlaylistSeed() {
+        playlistSeed = HisterPlaylist.createSeed();
     }
 
     function getYearPoints() {
@@ -302,7 +336,7 @@ window.onload = function () {
     function createTeam(name) {
         return {
             id: 'team-' + Date.now() + '-' + Math.floor(Math.random() * 10000),
-            name: name,
+            name: HisterSession.cleanText(name, 'Equipo', 60),
             score: 0
         };
     }
@@ -314,6 +348,27 @@ window.onload = function () {
         teams.push(team);
         activeTeamId = team.id;
         if (teamNameInput) teamNameInput.value = '';
+        renderScoreboard();
+        saveProgress();
+    }
+
+    function renameActiveTeam() {
+        var team = getActiveTeam();
+        var name = teamNameInput ? teamNameInput.value.trim() : '';
+        if (!team || !name) return;
+        team.name = HisterSession.cleanText(name, team.name, 60);
+        if (teamNameInput) teamNameInput.value = '';
+        renderScoreboard();
+        saveProgress();
+    }
+
+    function deleteActiveTeam() {
+        var team = getActiveTeam();
+        if (!team) return;
+        teams = teams.filter(function(item) {
+            return item.id !== team.id;
+        });
+        activeTeamId = teams[0] ? teams[0].id : null;
         renderScoreboard();
         saveProgress();
     }
@@ -337,6 +392,8 @@ window.onload = function () {
         scoreboardList.innerHTML = '';
         if (!teams.length) {
             activeTeamLabel.textContent = '—';
+            if (btnRenameTeam) btnRenameTeam.disabled = true;
+            if (btnDeleteTeam) btnDeleteTeam.disabled = true;
             var empty = document.createElement('p');
             empty.className = 'history-empty';
             empty.textContent = 'Añade equipos para empezar a puntuar.';
@@ -346,6 +403,8 @@ window.onload = function () {
 
         if (!getActiveTeam()) activeTeamId = teams[0].id;
         activeTeamLabel.textContent = getActiveTeam().name;
+        if (btnRenameTeam) btnRenameTeam.disabled = false;
+        if (btnDeleteTeam) btnDeleteTeam.disabled = false;
 
         teams.slice().sort(function(a, b) {
             return b.score - a.score;
@@ -353,7 +412,12 @@ window.onload = function () {
             var row = document.createElement('button');
             row.type = 'button';
             row.className = team.id === activeTeamId ? 'team-row is-active-team' : 'team-row';
-            row.innerHTML = '<span>' + team.name + '</span><strong>' + team.score + '</strong>';
+            var teamName = document.createElement('span');
+            teamName.textContent = team.name;
+            var teamScore = document.createElement('strong');
+            teamScore.textContent = team.score;
+            row.appendChild(teamName);
+            row.appendChild(teamScore);
             row.addEventListener('click', function() {
                 activeTeamId = team.id;
                 renderScoreboard();
@@ -507,6 +571,43 @@ window.onload = function () {
         if (!show && progressBar) progressBar.style.display = 'none';
     }
 
+    function showAdvancedOptions(show) {
+        if (!advancedOptions) return;
+        advancedOptions.style.display = show ? '' : 'none';
+        if (!show) advancedOptions.open = false;
+    }
+
+    function showInitialOnlyPanels(show) {
+        initialOnlyPanels.forEach(function(panel) {
+            panel.style.display = show ? '' : 'none';
+            if (!show && panel.tagName && panel.tagName.toLowerCase() === 'details') {
+                panel.open = false;
+            }
+        });
+    }
+
+    function setPrintBuildProgress(done, total, percent) {
+        if (!printBuildStatus || !printBuildTitle || !printBuildCopy || !printBuildFill) return;
+        var safeTotal = total || 0;
+        var safeDone = Math.min(done || 0, safeTotal);
+        var safePercent = Math.max(0, Math.min(percent || 0, 100));
+
+        printBuildStatus.classList.add('is-visible');
+        printBuildStatus.classList.toggle('is-complete', safePercent >= 100);
+        printBuildTitle.textContent = safePercent >= 100 ? 'Colección lista' : 'Preparando cartas... ' + safePercent + '%';
+        printBuildCopy.textContent = safePercent >= 100
+            ? safeTotal + ' cartas listas para imprimir.'
+            : 'Generando QR ' + safeDone + ' de ' + safeTotal + '.';
+        printBuildFill.style.width = safePercent + '%';
+    }
+
+    function hidePrintBuildProgress() {
+        if (!printBuildStatus || !printBuildFill) return;
+        printBuildStatus.classList.remove('is-visible');
+        printBuildStatus.classList.remove('is-complete');
+        printBuildFill.style.width = '0%';
+    }
+
     function showSongCard(song) {
         var songNumber = HisterCatalog.getSongNumber(queenSongs, song);
         if (cardTitleEl) cardTitleEl.textContent = 'Hitster Queen';
@@ -528,6 +629,8 @@ window.onload = function () {
         ansAlbum.textContent = song.album;
         emptyState.style.display = 'none';
         cardContainer.style.display = 'block';
+        showAdvancedOptions(false);
+        showInitialOnlyPanels(false);
         activeCard.classList.remove('is-flipped');
     }
 
@@ -535,6 +638,8 @@ window.onload = function () {
         dashAudio.style.display = 'none';
         cardContainer.style.display = 'none';
         emptyState.style.display = 'block';
+        showAdvancedOptions(true);
+        showInitialOnlyPanels(true);
         activeCard.classList.remove('is-flipped');
         resetGameQrContainer();
         currentSong = null;
@@ -617,6 +722,7 @@ window.onload = function () {
         failedSongKeys.clear();
         playedHistory = [];
         completedFilter = null;
+        refreshPlaylistSeed();
         teams.forEach(function(team) {
             team.score = 0;
         });
@@ -632,20 +738,9 @@ window.onload = function () {
     // ── 6. Construir pool filtrado ─────────────────────────────
     function buildPool() {
         var val = filterSelect ? filterSelect.value : 'all';
-        if (val === 'all') {
-            filteredPool = queenSongs.slice();
-        } else {
-            filteredPool = HisterCatalog.filterByEra(queenSongs, val);
-        }
         var settings = getPlaylistSettings();
-        filteredPool = HisterCatalog.filterByDifficulty(filteredPool, settings.difficulty);
-        filteredPool = HisterCatalog.filterByAlbum(filteredPool, settings.album);
-        filteredPool = HisterCatalog.filterByCardNumbers(
-            filteredPool,
-            queenSongs,
-            HisterCatalog.parseCardList(settings.manualCards, queenSongs.length)
-        );
-        filteredPool = HisterCatalog.limitSongs(filteredPool, settings.size);
+        var result = HisterPlaylist.buildPool(queenSongs, val, settings, playlistSeed);
+        filteredPool = result.songs;
         updateStats();
         if (countEl) countEl.textContent = filteredPool.length;
         
@@ -790,42 +885,6 @@ window.onload = function () {
         playSong(song);
     }
 
-    function validatePreviewSong(song) {
-        return new Promise(function(resolve) {
-            var probe = new Audio();
-            var done = false;
-            var timer = setTimeout(function() {
-                finish(false, 'timeout');
-            }, 8000);
-
-            function cleanup() {
-                clearTimeout(timer);
-                probe.removeAttribute('src');
-                probe.load();
-            }
-
-            function finish(ok, reason) {
-                if (done) return;
-                done = true;
-                cleanup();
-                resolve({ ok: ok, reason: reason || '' });
-            }
-
-            probe.preload = 'metadata';
-            probe.addEventListener('loadedmetadata', function() {
-                finish(true);
-            });
-            probe.addEventListener('canplay', function() {
-                finish(true);
-            });
-            probe.addEventListener('error', function() {
-                finish(false, 'error');
-            });
-            probe.src = song.audioUrl;
-            probe.load();
-        });
-    }
-
     function renderPreviewFailure(song, reason) {
         if (!previewCheckResults) return;
         var item = document.createElement('li');
@@ -836,37 +895,46 @@ window.onload = function () {
     }
 
     function runPreviewDiagnostics() {
-        var pool = filteredPool.length ? filteredPool : queenSongs;
-        var checked = 0;
-        var failed = 0;
-
         if (!btnCheckPreviews || !previewCheckStatus || !previewCheckResults) return;
-        btnCheckPreviews.disabled = true;
-        previewCheckResults.innerHTML = '';
-        previewCheckStatus.textContent = 'Comprobando 0/' + pool.length + ' previews...';
-
-        function next() {
-            if (checked >= pool.length) {
-                previewCheckStatus.textContent = failed
-                    ? 'Comprobación terminada: ' + failed + ' posibles fallos de ' + pool.length + '.'
-                    : 'Comprobación terminada: todos los previews respondieron.';
-                btnCheckPreviews.disabled = false;
-                return;
-            }
-
-            var song = pool[checked];
-            validatePreviewSong(song).then(function(result) {
-                checked++;
-                if (!result.ok) {
-                    failed++;
-                    renderPreviewFailure(song, result.reason);
-                }
-                previewCheckStatus.textContent = 'Comprobando ' + checked + '/' + pool.length + ' · fallos: ' + failed;
-                next();
-            });
+        if (activeDiagnostics) {
+            activeDiagnostics.cancel();
+            activeDiagnostics = null;
+            btnCheckPreviews.disabled = false;
+            btnCheckPreviews.textContent = 'Comprobar catálogo activo';
+            return;
         }
 
-        next();
+        var pool = filteredPool.length ? filteredPool : queenSongs;
+        btnCheckPreviews.disabled = true;
+        btnCheckPreviews.textContent = 'Comprobando...';
+        previewCheckResults.innerHTML = '';
+
+        activeDiagnostics = HisterDiagnostics.runPreviewDiagnostics({
+            pool: pool,
+            allSongs: queenSongs,
+            concurrency: 4,
+            timeoutMs: 8000,
+            onStart: function(total) {
+                btnCheckPreviews.disabled = false;
+                btnCheckPreviews.textContent = 'Cancelar comprobación';
+                previewCheckStatus.textContent = 'Comprobando 0/' + total + ' previews...';
+            },
+            onProgress: function(checked, total, failed) {
+                previewCheckStatus.textContent = 'Comprobando ' + checked + '/' + total + ' · fallos: ' + failed;
+            },
+            onFailure: renderPreviewFailure,
+            onDone: function(failed, total) {
+                previewCheckStatus.textContent = failed
+                    ? 'Comprobación terminada: ' + failed + ' posibles fallos de ' + total + '.'
+                    : 'Comprobación terminada: todos los previews respondieron.';
+                btnCheckPreviews.disabled = false;
+                btnCheckPreviews.textContent = 'Comprobar catálogo activo';
+                activeDiagnostics = null;
+            },
+            onCancel: function(checked, total, failed) {
+                previewCheckStatus.textContent = 'Comprobación cancelada en ' + checked + '/' + total + ' · fallos: ' + failed;
+            }
+        });
     }
 
     function exportSession() {
@@ -880,6 +948,7 @@ window.onload = function () {
             completedFilter: completedFilter,
             rules: getRules(),
             playlist: getPlaylistSettings(),
+            playlistSeed: playlistSeed,
             presenterMode: presenterMode ? presenterMode.checked : false,
             teams: teams,
             activeTeamId: activeTeamId
@@ -901,16 +970,21 @@ window.onload = function () {
         var reader = new FileReader();
         reader.onload = function() {
             try {
-                var payload = JSON.parse(reader.result);
+                var payload = HisterSession.normalizeImportedPayload(JSON.parse(reader.result), queenSongs);
                 playedSongKeys = new Set(payload.playedSongKeys || []);
                 failedSongKeys = new Set(payload.failedSongKeys || []);
                 playedHistory = Array.isArray(payload.playedHistory) ? payload.playedHistory : [];
                 completedFilter = payload.completedFilter || null;
                 teams = Array.isArray(payload.teams) ? payload.teams : [];
                 activeTeamId = payload.activeTeamId || (teams[0] && teams[0].id) || null;
-                if (filterSelect && payload.filter) filterSelect.value = payload.filter;
+                if (filterSelect && payload.filter) {
+                    filterSelect.value = Array.from(filterSelect.options).some(function(option) {
+                        return option.value === payload.filter;
+                    }) ? payload.filter : 'all';
+                }
                 applyRules(payload.rules);
                 applyPlaylistSettings(payload.playlist);
+                playlistSeed = payload.playlistSeed || HisterPlaylist.createSeed();
                 if (presenterMode && typeof payload.presenterMode === 'boolean') {
                     presenterMode.checked = payload.presenterMode;
                 }
@@ -1050,6 +1124,7 @@ window.onload = function () {
     // ── 15. Filtro por era ────────────────────────────────────
     if (filterSelect) {
         filterSelect.addEventListener('change', function () {
+            refreshPlaylistSeed();
             buildPool();
             syncCompletedStateFromProgress();
             if (countEl) countEl.textContent = filteredPool.length;
@@ -1071,6 +1146,7 @@ window.onload = function () {
     [difficultySelect, albumSelect, playlistSizeSelect].forEach(function(control) {
         if (!control) return;
         control.addEventListener('change', function() {
+            refreshPlaylistSeed();
             buildPool();
             syncCompletedStateFromProgress();
             resetToEmptyState();
@@ -1079,6 +1155,7 @@ window.onload = function () {
     });
     if (manualCardList) {
         manualCardList.addEventListener('change', function() {
+            refreshPlaylistSeed();
             buildPool();
             syncCompletedStateFromProgress();
             resetToEmptyState();
@@ -1094,6 +1171,8 @@ window.onload = function () {
     if (btnCheckPreviews) btnCheckPreviews.addEventListener('click', runPreviewDiagnostics);
     if (presenterMode) presenterMode.addEventListener('change', saveProgress);
     if (btnAddTeam) btnAddTeam.addEventListener('click', addTeam);
+    if (btnRenameTeam) btnRenameTeam.addEventListener('click', renameActiveTeam);
+    if (btnDeleteTeam) btnDeleteTeam.addEventListener('click', deleteActiveTeam);
     if (teamNameInput) {
         teamNameInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') addTeam();
@@ -1113,7 +1192,10 @@ window.onload = function () {
     }
 
     // ── 16. Imprimir ──────────────────────────────────────────
-    btnPrint.addEventListener('click', function () { window.print(); });
+    btnPrint.addEventListener('click', function () {
+        if (cardsGenerating) return;
+        window.print();
+    });
 
     // ── 17. Navegación ────────────────────────────────────────
     function goToGame() {
@@ -1132,16 +1214,39 @@ window.onload = function () {
         navCards.classList.add('active');
         navGame.classList.remove('active');
         pauseAudio();
-        if (!cardsGenerated) {
-            HisterPrintCards.generate(document.getElementById('cards-container'), queenSongs, renderPrintQr);
-            cardsGenerated = true;
-            if (countEl2) countEl2.textContent = queenSongs.length;
+        if (countEl2) countEl2.textContent = queenSongs.length;
+        if (!cardsGenerated && !cardsGenerating) {
+            cardsGenerating = true;
+            if (btnPrint) {
+                btnPrint.disabled = true;
+                btnPrint.textContent = '⏳ Preparando cartas...';
+            }
+            setPrintBuildProgress(0, queenSongs.length, 0);
+            HisterPrintCards.generateAsync(cardsContainer, queenSongs, renderPrintQr, {
+                batchSize: 10,
+                onProgress: function(progress) {
+                    setPrintBuildProgress(progress.done, progress.total, progress.percent);
+                }
+            }).then(function() {
+                cardsGenerated = true;
+                cardsGenerating = false;
+                setPrintBuildProgress(queenSongs.length, queenSongs.length, 100);
+                if (btnPrint) {
+                    btnPrint.disabled = false;
+                    btnPrint.textContent = '🖨️ Imprimir Cartas';
+                }
+                window.setTimeout(hidePrintBuildProgress, 1200);
+            });
         }
     }
 
     navGame.addEventListener('click',  goToGame);
     navCards.addEventListener('click', goToCards);
-    goToGame();
+    if (window.location.hash === '#cards') {
+        goToCards();
+    } else {
+        goToGame();
+    }
 
     // ── 18. Inicializar pool, stats e historial ─────────────────
     if (window.location.protocol !== 'file:') {

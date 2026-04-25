@@ -18,17 +18,20 @@ Juego web estático inspirado en Hitster para jugar con canciones de Queen. La a
 - Cartas imprimibles con QR o fallback visible si el generador QR no está disponible.
 - Cartas imprimibles numeradas para reproducir una carta física desde la pantalla principal si falla el QR.
 - Colección imprimible rediseñada para pantalla e impresión, sin mostrar spoilers de canción.
+- Generación progresiva de la colección imprimible con animación, contador y bloqueo temporal del botón de imprimir hasta que los QR están listos.
 - Reglas de puntuación configurables para año, título y álbum.
 - Marcador de equipos persistente con suma rápida por año, título, álbum o puntos manuales.
+- Renombrado y eliminación del equipo activo desde el marcador.
 - Filtros de dificultad por hits, cortes de álbum, instrumentales/soundtrack y modo difícil.
-- Playlist manual por álbum, tamaño de partida o lista de números de carta.
+- Playlist manual por álbum, tamaño de partida aleatorio o lista exacta de números de carta.
 - Opciones avanzadas colapsadas por defecto para mantener limpia la pantalla de inicio.
 - Modo presentador para evitar revelar la respuesta al tocar accidentalmente la carta.
 - Importación y exportación de sesión en JSON.
 - Diagnóstico desde la interfaz para comprobar previews remotos del catálogo activo.
 - Soporte PWA básico: instalación en móvil/escritorio y caché local de la app, imágenes y scripts.
 - Fondo de concierto aleatorio entre dos imágenes locales.
-- Diseño responsive para escritorio y móvil, con panel de historial estable.
+- Diseño responsive para escritorio y móvil, con panel de historial estable, menú superior flotante, foco accesible y marcador visualmente diferenciado.
+- Separación clara entre configuración inicial y controles durante la partida: diagnóstico, opciones avanzadas y gestión de equipos solo aparecen antes de iniciar.
 
 ## Estructura
 
@@ -36,7 +39,10 @@ Juego web estático inspirado en Hitster para jugar con canciones de Queen. La a
 - `styles.css`: estilos visuales, impresión y responsive.
 - `js/app.js`: orquestación principal del juego, audio, navegación, historial y fondo aleatorio.
 - `js/catalog.js`: utilidades y validación del catálogo.
+- `js/session.js`: saneado de sesiones importadas y normalización de reglas, equipos y playlist.
+- `js/playlist.js`: construcción de partidas filtradas, selección aleatoria con semilla y modo manual por carta.
 - `js/qr-renderer.js`: generación de QR y fallback si falla la librería externa.
+- `js/diagnostics.js`: comprobación concurrente y cancelable de previews remotos.
 - `js/print-cards.js`: generación de cartas imprimibles.
 - `data.js`: catálogo de canciones, dificultad explícita y URLs de preview.
 - `scripts/validate-catalog.js`: validación local del catálogo.
@@ -90,6 +96,7 @@ La aplicación guarda automáticamente en `localStorage`:
 - Historial de canciones reveladas.
 - Filtro por época seleccionado.
 - Filtros de dificultad, álbum, tamaño de partida y lista manual.
+- Semilla de playlist para que una partida corta conserve la misma selección aleatoria al recargar.
 - Reglas de puntuación.
 - Equipos y marcador.
 - Modo presentador.
@@ -98,6 +105,8 @@ La aplicación guarda automáticamente en `localStorage`:
 Para empezar desde cero, usa `Reiniciar Sesión`.
 
 También puedes usar `Exportar sesión` para guardar progreso, reglas, playlist y marcador en JSON, o `Importar sesión` para restaurarlos en otro navegador.
+
+Las listas manuales de cartas tienen prioridad sobre dificultad, álbum y tamaño de partida. Si introduces `1, 5, 10-20`, la partida se construye con esos números exactos de carta.
 
 Si la partida ya terminó y vuelves a la pantalla principal, al empezar de nuevo el juego reinicia la sesión completa para limpiar las cartas usadas y reconstruir correctamente la cara frontal con su QR.
 
@@ -120,12 +129,21 @@ La sección `Imprimir Colección` está pensada para mostrar todas las cartas de
 - En impresión, se simplifican para que salgan limpias y legibles en papel.
 - No muestran título, año ni álbum reales, para evitar spoilers antes de jugar.
 - Cada tarjeta muestra un número de carta. Si un QR falla, introduce ese número en `Usar carta impresa` dentro del modo escenario.
+- La colección se genera por bloques para evitar congelar la interfaz. Mientras se preparan los QR, la pantalla muestra progreso y el botón de imprimir permanece desactivado.
+
+## Flujo visual de partida
+
+La pantalla inicial concentra las decisiones de configuración: filtros, dificultad, reglas, importación/exportación, diagnóstico de previews y gestión de equipos. Al sacar una canción, la consola oculta esos bloques para reducir ruido y deja solo los controles necesarios durante la partida: reproducción, revelar respuesta, volver al inicio, historial y marcador.
+
+Los botones de puntuación aplican puntos al equipo activo. `+ Año`, `+ Título` y `+ Álbum` usan los valores definidos en las reglas configurables; `+1` y `-1` sirven para ajustes manuales rápidos.
 
 ## PWA y uso sin conexión
 
 La aplicación registra un service worker cuando se sirve por `http://localhost` o HTTPS. Esto cachea HTML, CSS, JavaScript e imágenes locales para abrir la app aunque la conexión falle.
 
 Los previews de audio y `QRCode.js` siguen siendo externos; si no hay conexión, la app puede abrirse, pero el audio remoto y la primera carga del generador QR pueden no estar disponibles.
+
+Cuando cambien archivos cacheados, actualiza `CACHE_NAME` en `sw.js` para forzar que los navegadores instalen la versión nueva.
 
 ## Publicación en GitHub Pages
 

@@ -6,6 +6,10 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 
 ## [Unreleased]
 
+Sin cambios pendientes.
+
+## [1.2.0] - 2026-04-25
+
 ### Añadido
 
 - Scripts de validación local del catálogo y validación opcional de previews remotos.
@@ -13,6 +17,7 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 - Integridad SRI para la carga externa de `QRCode.js`.
 - Reglas configurables de puntuación para año, título y álbum.
 - Marcador de equipos persistente.
+- Renombrado y eliminación del equipo activo.
 - Filtros de dificultad por hits, cortes de álbum, instrumentales/soundtrack y modo difícil.
 - Modo playlist manual por álbum, número de cartas o lista de cartas.
 - Buscador de carta impresa por número, sin mostrar spoilers antes de revelar.
@@ -21,16 +26,42 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 - Importación y exportación de sesión en JSON.
 - Diagnóstico de previews remotos desde la interfaz.
 - Soporte PWA básico con `manifest.webmanifest` y caché local mediante service worker.
+- Módulos separados para sesión, playlist aleatoria y diagnóstico de previews.
+- Generación progresiva de cartas imprimibles con indicador visual de progreso.
+- Estado final `Colección lista` al terminar de calcular QR y maquetar la colección.
+- Foco accesible visible para navegación por teclado.
+- Soporte `prefers-reduced-motion` para reducir animaciones si el sistema lo solicita.
 
 ### Cambiado
 
-- Sincronizada la versión de `package.json` con `v1.1.0`.
+- Sincronizada la versión de `package.json` con `v1.2.0`.
 - Renombradas las imágenes JPEG de `.png` a `.jpg`.
 - Movidos estilos inline de `index.html` a `styles.css`.
 - Eliminada la carga duplicada de Google Fonts.
 - Las cartas imprimibles ahora incluyen número visible para fallback físico.
 - Las opciones de playlist, dificultad, reglas, carta impresa y sesión quedan dentro de `Opciones avanzadas`, cerrado por defecto.
 - Actualizada la versión de caché PWA para servir la interfaz más reciente.
+- El tamaño de partida ahora selecciona cartas aleatorias con semilla persistente.
+- Las cartas manuales tienen prioridad sobre filtros de dificultad, álbum y tamaño.
+- Optimización de imágenes JPG para reducir el peso inicial.
+- El diagnóstico de previews ahora usa concurrencia limitada y se puede cancelar.
+- La colección imprimible diferencia la vista en pantalla de la salida real en papel.
+- La impresión real pagina correctamente la colección completa sin barras de scroll ni recortes.
+- El botón de imprimir queda desactivado mientras se están generando las cartas.
+- Diagnóstico, opciones avanzadas y gestión de equipos quedan limitados a la pantalla inicial.
+- Durante la partida se mantiene una consola más limpia con audio, revelar, historial y marcador.
+- Rediseñado el menú superior como barra flotante con estado activo más visible.
+- Mejorado el estado inicial con panel translúcido, borde dorado y mejor jerarquía visual.
+- Mejorado el marcador con equipo activo más claro, hover y colores específicos para `+1` y `-1`.
+
+### Corregido
+
+- Evitada la inserción de HTML al renderizar nombres de equipos.
+- Saneada la importación de sesiones JSON antes de restaurar estado.
+- El service worker ya no cachea respuestas no válidas ni peticiones que no sean `GET`.
+- Evitado que la sección de diagnóstico siga visible después de iniciar una partida.
+- Evitado que la impresión de colección se genere como una única página recortada.
+- Evitado que el usuario pueda lanzar la impresión antes de que todos los QR estén listos.
 
 ## [1.1.0] - 2026-04-08
 

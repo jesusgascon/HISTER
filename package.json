@@ -1,12 +1,12 @@
 {
   "name": "hister-queen-edition",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Juego web estático tipo Hitster inspirado en Queen.",
   "scripts": {
     "start": "python3 -m http.server 8000",
     "test": "npm run validate:catalog && npm run check:js",
-    "check:js": "node --check js/app.js && node --check js/catalog.js && node --check js/qr-renderer.js && node --check js/print-cards.js && node --check data.js && node --check scripts/validate-catalog.js && node --check scripts/validate-previews.js && node --check sw.js",
+    "check:js": "node --check js/app.js && node --check js/catalog.js && node --check js/session.js && node --check js/playlist.js && node --check js/qr-renderer.js && node --check js/diagnostics.js && node --check js/print-cards.js && node --check data.js && node --check scripts/validate-catalog.js && node --check scripts/validate-previews.js && node --check sw.js",
     "validate:catalog": "node scripts/validate-catalog.js",
     "validate:previews": "node scripts/validate-previews.js"
   },

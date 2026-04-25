@@ -117,13 +117,6 @@
         });
     }
 
-    function limitSongs(songs, size) {
-        if (!size || size === 'all') return songs.slice();
-        var limit = parseInt(size, 10);
-        if (isNaN(limit) || limit <= 0) return songs.slice();
-        return songs.slice(0, limit);
-    }
-
     function validateCatalog(songs) {
         var errors = [];
         var songKeys = {};
@@ -174,7 +167,6 @@
         filterByAlbum: filterByAlbum,
         parseCardList: parseCardList,
         filterByCardNumbers: filterByCardNumbers,
-        limitSongs: limitSongs,
         validateCatalog: validateCatalog
     };
 }(window));

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hister-queen-v3';
+const CACHE_NAME = 'hister-queen-v5';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,10 @@ const LOCAL_ASSETS = [
   './data.js',
   './js/app.js',
   './js/catalog.js',
+  './js/session.js',
+  './js/playlist.js',
   './js/qr-renderer.js',
+  './js/diagnostics.js',
   './js/print-cards.js',
   './queen_logo.jpg',
   './queen_concert_bg.jpg',
@@ -31,12 +34,14 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
   const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) return;
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
       return cached || fetch(event.request).then((response) => {
+        if (!response.ok) return response;
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return response;
