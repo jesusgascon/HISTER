@@ -2,6 +2,16 @@
 
 Juego web estático inspirado en Hitster para jugar con canciones de Queen. La aplicación selecciona canciones aleatorias, reproduce previews de audio, muestra una carta con QR y permite revelar año, título y álbum.
 
+## Capturas
+
+### Configuración inicial
+
+![Pantalla de configuración inicial](docs/screenshots/configuration-screen.png)
+
+### Partida en curso
+
+![Pantalla de juego con carta QR y consola](docs/screenshots/game-screen.png)
+
 ## Características
 
 - Catálogo de canciones organizado por año y álbum.

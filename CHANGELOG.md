@@ -6,7 +6,9 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 
 ## [Unreleased]
 
-Sin cambios pendientes.
+### Añadido
+
+- Capturas de pantalla de configuración inicial y partida en curso enlazadas desde el README.
 
 ## [1.2.0] - 2026-04-25
 
