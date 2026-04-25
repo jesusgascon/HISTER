@@ -87,6 +87,11 @@ window.onload = function () {
     var btnScoreMinusOne = document.getElementById('btn-score-minus-one');
     var btnScoreUndo = document.getElementById('btn-score-undo');
     var scoreFeedbackText = document.getElementById('score-feedback-text');
+    var scoreGameControls = document.getElementById('score-game-controls');
+    var btnAbout = document.getElementById('btn-about');
+    var aboutModal = document.getElementById('about-modal');
+    var btnCloseAbout = document.getElementById('btn-close-about');
+    var aboutSoundStatus = document.getElementById('about-sound-status');
     var cardTitleEl    = activeCard ? activeCard.querySelector('.card-title') : null;
     var scanTextEl     = activeCard ? activeCard.querySelector('.scan-text') : null;
     var backTitleEl    = activeCard ? activeCard.querySelector('.back-title') : null;
@@ -116,6 +121,15 @@ window.onload = function () {
     var teams = [];
     var activeTeamId = null;
     var scoreHistory = [];
+    var scoredCategoriesForCurrentCard = {};
+    var renamePending = false;
+    var aboutAudioDecks = null;
+    var aboutAudioRunning = false;
+    var aboutActiveDeck = 0;
+    var aboutPlaylist = [];
+    var aboutSongIndex = 0;
+    var aboutTransitionTimer = null;
+    var aboutFadeTimer = null;
     var playlistSeed = HisterPlaylist.createSeed();
     var activeDiagnostics = null;
     var qrRenderer = HisterQrRenderer.create({
@@ -351,6 +365,10 @@ window.onload = function () {
 
     function addTeam() {
         var name = teamNameInput ? teamNameInput.value.trim() : '';
+        if (renamePending) {
+            renameActiveTeam();
+            return;
+        }
         if (!name) return;
         var team = createTeam(name);
         teams.push(team);
@@ -363,22 +381,39 @@ window.onload = function () {
     function renameActiveTeam() {
         var team = getActiveTeam();
         var name = teamNameInput ? teamNameInput.value.trim() : '';
-        if (!team || !name) return;
+        if (!team) {
+            setScoreFeedback('No hay equipo activo para renombrar.');
+            return;
+        }
+        if (!name || (!renamePending && name === team.name)) {
+            if (teamNameInput) {
+                teamNameInput.value = team.name;
+                teamNameInput.focus();
+                teamNameInput.select();
+            }
+            renamePending = true;
+            setScoreFeedback('Edita el nombre del equipo activo y pulsa Enter o "Renombrar activo" para guardar.');
+            return;
+        }
         team.name = HisterSession.cleanText(name, team.name, 60);
+        renamePending = false;
         if (teamNameInput) teamNameInput.value = '';
         renderScoreboard();
+        setScoreFeedback('Equipo renombrado a ' + team.name + '.');
         saveProgress();
     }
 
     function deleteActiveTeam() {
         var team = getActiveTeam();
         if (!team) return;
+        renamePending = false;
         teams = teams.filter(function(item) {
             return item.id !== team.id;
         });
         scoreHistory = scoreHistory.filter(function(item) {
             return item.teamId !== team.id;
         });
+        if (teamNameInput) teamNameInput.value = '';
         activeTeamId = teams[0] ? teams[0].id : null;
         renderScoreboard();
         saveProgress();
@@ -398,6 +433,29 @@ window.onload = function () {
         [btnScoreYear, btnScoreTitle, btnScoreAlbum, btnScorePlusOne, btnScoreMinusOne].forEach(function(button) {
             if (button) button.disabled = !enabled;
         });
+        updateScoreCategoryButtons();
+    }
+
+    function canScoreCurrentCard() {
+        return !!currentSong && currentSongRevealed && !gameCompleted;
+    }
+
+    function getCurrentScoreCardKey() {
+        return currentSong ? HisterCatalog.getSongKey(currentSong) : '';
+    }
+
+    function canUndoCurrentCardScore() {
+        return canScoreCurrentCard() &&
+            scoreHistory.length > 0 &&
+            scoreHistory[0].cardKey === getCurrentScoreCardKey();
+    }
+
+    function updateScoreCategoryButtons() {
+        var canUseCategoryButtons = canScoreCurrentCard() && !!getActiveTeam();
+        if (btnScoreYear) btnScoreYear.disabled = !canUseCategoryButtons || !!scoredCategoriesForCurrentCard.year;
+        if (btnScoreTitle) btnScoreTitle.disabled = !canUseCategoryButtons || !!scoredCategoriesForCurrentCard.title;
+        if (btnScoreAlbum) btnScoreAlbum.disabled = !canUseCategoryButtons || !!scoredCategoriesForCurrentCard.album;
+        if (btnScoreUndo) btnScoreUndo.disabled = !canUndoCurrentCardScore();
     }
 
     function formatSignedNumber(value) {
@@ -405,9 +463,17 @@ window.onload = function () {
     }
 
     function renderScoreFeedback() {
-        if (btnScoreUndo) btnScoreUndo.disabled = !scoreHistory.length;
+        updateScoreCategoryButtons();
         if (!teams.length) {
             setScoreFeedback('Crea un equipo en la pantalla inicial para activar el marcador.');
+            return;
+        }
+        if (currentSong && !currentSongRevealed && !gameCompleted) {
+            setScoreFeedback('Puntuación bloqueada: revela la carta antes de sumar puntos.');
+            return;
+        }
+        if (currentSong && currentSongRevealed && scoreHistory.length && scoreHistory[0].cardKey !== getCurrentScoreCardKey()) {
+            setScoreFeedback('Carta revelada. Puntúa esta carta una sola vez por Año, Título y Álbum.');
             return;
         }
         if (!scoreHistory.length) {
@@ -418,10 +484,19 @@ window.onload = function () {
         setScoreFeedback('Último: ' + formatSignedNumber(last.delta) + ' ' + last.label + ' para ' + last.teamName + ' · total ' + last.nextScore + '.');
     }
 
-    function updateTeamScore(delta, label) {
+    function updateTeamScore(delta, label, category) {
         var team = getActiveTeam();
         if (!team) {
             setScoreFeedback('No hay equipo activo. Vuelve al inicio y crea un equipo para puntuar.');
+            return;
+        }
+        if (!canScoreCurrentCard()) {
+            setScoreFeedback('Primero revela la carta. No se puede puntuar antes de ver la respuesta.');
+            return;
+        }
+        if (category && scoredCategoriesForCurrentCard[category]) {
+            setScoreFeedback(label + ' ya se ha puntuado en esta carta. Usa +1, -1 o Deshacer para corregir.');
+            updateScoreCategoryButtons();
             return;
         }
         if (!delta) {
@@ -436,8 +511,11 @@ window.onload = function () {
             label: label || 'Puntos',
             delta: delta,
             previousScore: previousScore,
-            nextScore: team.score
+            nextScore: team.score,
+            category: category || '',
+            cardKey: getCurrentScoreCardKey()
         });
+        if (category) scoredCategoriesForCurrentCard[category] = true;
         scoreHistory = scoreHistory.slice(0, 30);
         activeTeamId = team.id;
         renderScoreboard();
@@ -445,7 +523,8 @@ window.onload = function () {
     }
 
     function undoLastScore() {
-        if (!scoreHistory.length) {
+        if (!canUndoCurrentCardScore()) {
+            setScoreFeedback('Solo puedes deshacer puntuaciones de la carta actual después de revelarla.');
             renderScoreFeedback();
             return;
         }
@@ -460,10 +539,196 @@ window.onload = function () {
             return;
         }
         team.score = last.previousScore;
+        if (last.category) scoredCategoriesForCurrentCard[last.category] = false;
         activeTeamId = team.id;
         renderScoreboard();
         setScoreFeedback('Deshecho: ' + formatSignedNumber(last.delta) + ' ' + last.label + ' de ' + last.teamName + '. Total restaurado a ' + team.score + '.');
         saveProgress();
+    }
+
+    function setAboutSoundStatus(text) {
+        if (aboutSoundStatus) aboutSoundStatus.textContent = text;
+    }
+
+    function shuffleSongs(songs) {
+        var shuffled = songs.slice();
+        for (var i = shuffled.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = shuffled[i];
+            shuffled[i] = shuffled[j];
+            shuffled[j] = tmp;
+        }
+        return shuffled;
+    }
+
+    function getAboutPlaylist() {
+        var hits = queenSongs.filter(function(song) {
+            return song.difficulty === 'hits' && song.audioUrl;
+        });
+        return shuffleSongs(hits.length ? hits : queenSongs.filter(function(song) {
+            return !!song.audioUrl;
+        }));
+    }
+
+    function ensureAboutAudioDecks() {
+        if (aboutAudioDecks || typeof Audio === 'undefined') return aboutAudioDecks;
+        aboutAudioDecks = [new Audio(), new Audio()];
+        aboutAudioDecks.forEach(function(deck) {
+            deck.preload = 'auto';
+            deck.volume = 0;
+            deck.addEventListener('ended', function() {
+                if (aboutAudioRunning) startAboutTransition(250);
+            });
+            deck.addEventListener('error', function() {
+                if (aboutAudioRunning) startAboutTransition(250);
+            });
+        });
+        return aboutAudioDecks;
+    }
+
+    function stopAboutAudioDeck(deck) {
+        if (!deck) return;
+        deck.pause();
+        deck.removeAttribute('src');
+        deck.load();
+        deck.volume = 0;
+    }
+
+    function clearAboutAudioTimers() {
+        clearTimeout(aboutTransitionTimer);
+        aboutTransitionTimer = null;
+        clearInterval(aboutFadeTimer);
+        aboutFadeTimer = null;
+    }
+
+    function scheduleAboutTransition(delay) {
+        clearTimeout(aboutTransitionTimer);
+        aboutTransitionTimer = setTimeout(function() {
+            startAboutTransition();
+        }, delay || 17000);
+    }
+
+    function getNextAboutSong() {
+        if (!aboutPlaylist.length || aboutSongIndex >= aboutPlaylist.length) {
+            aboutPlaylist = getAboutPlaylist();
+            aboutSongIndex = 0;
+        }
+        return aboutPlaylist[aboutSongIndex++];
+    }
+
+    function startAboutTransition(delay) {
+        if (!aboutAudioRunning) return;
+        if (delay) {
+            scheduleAboutTransition(delay);
+            return;
+        }
+        var decks = ensureAboutAudioDecks();
+        if (!decks || !decks.length) return;
+        var fromDeck = decks[aboutActiveDeck];
+        aboutActiveDeck = aboutActiveDeck ? 0 : 1;
+        var toDeck = decks[aboutActiveDeck];
+        var nextSong = getNextAboutSong();
+        if (!nextSong) return;
+
+        toDeck.pause();
+        toDeck.src = nextSong.audioUrl;
+        toDeck.currentTime = 0;
+        toDeck.volume = 0;
+        toDeck.load();
+
+        toDeck.play().then(function() {
+            var steps = 22;
+            var currentStep = 0;
+            clearInterval(aboutFadeTimer);
+            aboutFadeTimer = setInterval(function() {
+                currentStep += 1;
+                var progress = currentStep / steps;
+                toDeck.volume = Math.min(0.32, 0.32 * progress);
+                if (fromDeck && !fromDeck.paused) {
+                    fromDeck.volume = Math.max(0, 0.32 * (1 - progress));
+                }
+                if (currentStep >= steps) {
+                    clearInterval(aboutFadeTimer);
+                    aboutFadeTimer = null;
+                    if (fromDeck && fromDeck !== toDeck) {
+                        fromDeck.pause();
+                        try { fromDeck.currentTime = 0; } catch (err) {}
+                        fromDeck.volume = 0;
+                    }
+                    setAboutSoundStatus('Banda sonora activa · transición automática entre hits conocidos.');
+                    scheduleAboutTransition();
+                }
+            }, 90);
+        }).catch(function() {
+            setAboutSoundStatus('El navegador bloqueó la banda sonora. Cierra y vuelve a abrir Acerca de para reintentarlo.');
+            scheduleAboutTransition(1200);
+        });
+    }
+
+    function startAboutSoundtrack() {
+        var decks = ensureAboutAudioDecks();
+        if (!decks) return;
+        aboutAudioRunning = false;
+        aboutPlaylist = getAboutPlaylist();
+        aboutSongIndex = 0;
+        aboutActiveDeck = 0;
+        clearAboutAudioTimers();
+        decks.forEach(stopAboutAudioDeck);
+        aboutAudioRunning = true;
+        setAboutSoundStatus('Cargando banda sonora Queen...');
+
+        var firstSong = getNextAboutSong();
+        if (!firstSong) {
+            setAboutSoundStatus('No hay previews disponibles para la banda sonora.');
+            return;
+        }
+
+        var deck = decks[aboutActiveDeck];
+        deck.src = firstSong.audioUrl;
+        deck.currentTime = 0;
+        deck.volume = 0;
+        deck.load();
+        deck.play().then(function() {
+            var step = 0;
+            clearInterval(aboutFadeTimer);
+            aboutFadeTimer = setInterval(function() {
+                step += 1;
+                deck.volume = Math.min(0.32, step * 0.032);
+                if (step >= 10) {
+                    clearInterval(aboutFadeTimer);
+                    aboutFadeTimer = null;
+                }
+            }, 90);
+            setAboutSoundStatus('Banda sonora activa · hits conocidos de Queen en reproducción.');
+            scheduleAboutTransition();
+        }).catch(function() {
+            aboutAudioRunning = false;
+            setAboutSoundStatus('Toca aquí para activar la banda sonora si el navegador la bloqueó.');
+        });
+    }
+
+    function stopAboutSoundtrack() {
+        aboutAudioRunning = false;
+        clearAboutAudioTimers();
+        if (aboutAudioDecks) aboutAudioDecks.forEach(stopAboutAudioDeck);
+        setAboutSoundStatus('Banda sonora Queen lista para sonar al abrir esta obra.');
+    }
+
+    function openAboutModal() {
+        if (!aboutModal) return;
+        aboutModal.hidden = false;
+        document.body.classList.add('modal-open');
+        if (audio && !audio.paused) pauseAudio();
+        startAboutSoundtrack();
+        if (btnCloseAbout) btnCloseAbout.focus();
+    }
+
+    function closeAboutModal() {
+        if (!aboutModal) return;
+        aboutModal.hidden = true;
+        document.body.classList.remove('modal-open');
+        stopAboutSoundtrack();
+        if (btnAbout) btnAbout.focus();
     }
 
     function renderScoreboard() {
@@ -475,10 +740,28 @@ window.onload = function () {
             if (btnDeleteTeam) btnDeleteTeam.disabled = true;
             setScoreButtonsEnabled(false);
             renderScoreFeedback();
-            var empty = document.createElement('p');
-            empty.className = 'history-empty';
-            empty.textContent = 'Añade equipos en la pantalla inicial para empezar a puntuar.';
-            scoreboardList.appendChild(empty);
+            if (currentSong || gameCompleted) {
+                var empty = document.createElement('div');
+                empty.className = 'score-empty-callout';
+                var icon = document.createElement('div');
+                icon.className = 'score-empty-icon';
+                icon.textContent = '⚡';
+                var textWrap = document.createElement('div');
+                var title = document.createElement('strong');
+                title.textContent = 'Marcador bloqueado';
+                var copy = document.createElement('p');
+                copy.textContent = 'Añade al menos un equipo para activar los botones de puntuación.';
+                textWrap.appendChild(title);
+                textWrap.appendChild(copy);
+                empty.appendChild(icon);
+                empty.appendChild(textWrap);
+                scoreboardList.appendChild(empty);
+            } else {
+                var setupEmpty = document.createElement('p');
+                setupEmpty.className = 'history-empty';
+                setupEmpty.textContent = 'Crea los equipos antes de empezar la partida.';
+                scoreboardList.appendChild(setupEmpty);
+            }
             return;
         }
 
@@ -486,7 +769,7 @@ window.onload = function () {
         activeTeamLabel.textContent = getActiveTeam().name;
         if (btnRenameTeam) btnRenameTeam.disabled = false;
         if (btnDeleteTeam) btnDeleteTeam.disabled = false;
-        setScoreButtonsEnabled(true);
+        setScoreButtonsEnabled(canScoreCurrentCard());
         renderScoreFeedback();
 
         teams.slice().sort(function(a, b) {
@@ -503,6 +786,8 @@ window.onload = function () {
             row.appendChild(teamScore);
             row.addEventListener('click', function() {
                 activeTeamId = team.id;
+                renamePending = false;
+                if (teamNameInput) teamNameInput.value = '';
                 renderScoreboard();
                 saveProgress();
             });
@@ -530,6 +815,7 @@ window.onload = function () {
         currentSongRevealed = true;
         saveProgress();
         renderHistory();
+        renderScoreboard();
     }
 
     function renderHistory() {
@@ -669,6 +955,10 @@ window.onload = function () {
         });
     }
 
+    function showGameOnlyPanels(show) {
+        if (scoreGameControls) scoreGameControls.classList.toggle('is-visible', !!show);
+    }
+
     function setPrintBuildProgress(done, total, percent) {
         if (!printBuildStatus || !printBuildTitle || !printBuildCopy || !printBuildFill) return;
         var safeTotal = total || 0;
@@ -714,6 +1004,8 @@ window.onload = function () {
         cardContainer.style.display = 'block';
         showAdvancedOptions(false);
         showInitialOnlyPanels(false);
+        showGameOnlyPanels(true);
+        renderScoreboard();
         activeCard.classList.remove('is-flipped');
     }
 
@@ -723,10 +1015,13 @@ window.onload = function () {
         emptyState.style.display = 'block';
         showAdvancedOptions(true);
         showInitialOnlyPanels(true);
+        showGameOnlyPanels(false);
+        renderScoreboard();
         activeCard.classList.remove('is-flipped');
         resetGameQrContainer();
         currentSong = null;
         currentSongRevealed = false;
+        scoredCategoriesForCurrentCard = {};
         gameCompleted = false;
         showAudioControls(true);
         setPlayButtonLocked(false, '🎤 SACAR NUEVA CANCIÓN');
@@ -750,6 +1045,7 @@ window.onload = function () {
         resetProgressBar();
         currentSong = null;
         currentSongRevealed = false;
+        scoredCategoriesForCurrentCard = {};
         showSongCard({
             year: currentLabel,
             title: endMode === 'completed' ? (totalCompleted + ' canciones únicas') : 'No quedan previews jugables',
@@ -912,6 +1208,7 @@ window.onload = function () {
         if (!song) return;
         currentSong = song;
         currentSongRevealed = false;
+        scoredCategoriesForCurrentCard = {};
         playedSongKeys.add(HisterCatalog.getSongKey(currentSong));
         saveProgress();
         updateStats();
@@ -1261,15 +1558,44 @@ window.onload = function () {
     if (btnDeleteTeam) btnDeleteTeam.addEventListener('click', deleteActiveTeam);
     if (teamNameInput) {
         teamNameInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') addTeam();
+            if (event.key === 'Enter') {
+                if (renamePending) {
+                    renameActiveTeam();
+                } else {
+                    addTeam();
+                }
+            }
+            if (event.key === 'Escape' && renamePending) {
+                renamePending = false;
+                teamNameInput.value = '';
+                renderScoreFeedback();
+            }
         });
     }
-    if (btnScoreYear) btnScoreYear.addEventListener('click', function() { updateTeamScore(getScoreValue('year'), 'Año'); });
-    if (btnScoreTitle) btnScoreTitle.addEventListener('click', function() { updateTeamScore(getScoreValue('title'), 'Título'); });
-    if (btnScoreAlbum) btnScoreAlbum.addEventListener('click', function() { updateTeamScore(getScoreValue('album'), 'Álbum'); });
+    if (btnScoreYear) btnScoreYear.addEventListener('click', function() { updateTeamScore(getScoreValue('year'), 'Año', 'year'); });
+    if (btnScoreTitle) btnScoreTitle.addEventListener('click', function() { updateTeamScore(getScoreValue('title'), 'Título', 'title'); });
+    if (btnScoreAlbum) btnScoreAlbum.addEventListener('click', function() { updateTeamScore(getScoreValue('album'), 'Álbum', 'album'); });
     if (btnScorePlusOne) btnScorePlusOne.addEventListener('click', function() { updateTeamScore(1, 'Manual'); });
     if (btnScoreMinusOne) btnScoreMinusOne.addEventListener('click', function() { updateTeamScore(-1, 'Corrección'); });
     if (btnScoreUndo) btnScoreUndo.addEventListener('click', undoLastScore);
+    if (btnAbout) btnAbout.addEventListener('click', openAboutModal);
+    if (btnCloseAbout) btnCloseAbout.addEventListener('click', closeAboutModal);
+    if (aboutSoundStatus) {
+        aboutSoundStatus.addEventListener('click', function() {
+            if (!aboutModal || aboutModal.hidden) return;
+            startAboutSoundtrack();
+        });
+    }
+    if (aboutModal) {
+        aboutModal.addEventListener('click', function(event) {
+            if (event.target === aboutModal) closeAboutModal();
+        });
+    }
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && aboutModal && !aboutModal.hidden) {
+            closeAboutModal();
+        }
+    });
     if (btnExportSession) btnExportSession.addEventListener('click', exportSession);
     if (importSessionFile) {
         importSessionFile.addEventListener('change', function() {

@@ -55,6 +55,11 @@
                         </select>
                     </div>
 
+                    <button id="btn-about" class="about-trigger" type="button">
+                        <span>✦</span>
+                        Acerca de esta obra
+                    </button>
+
                 </div>
 
                 <!-- La Carta (JS la muestra cuando hay canción) -->
@@ -210,16 +215,18 @@
                             <button id="btn-delete-team" class="btn-mini btn-danger">Eliminar activo</button>
                         </div>
                         <div id="scoreboard-list" class="scoreboard-list"></div>
+                        <div id="score-game-controls" class="score-game-controls">
                         <div class="score-actions">
                             <button id="btn-score-year" class="btn-mini">+ Año</button>
                             <button id="btn-score-title" class="btn-mini">+ Título</button>
                             <button id="btn-score-album" class="btn-mini">+ Álbum</button>
                             <button id="btn-score-plus-one" class="btn-mini">+1</button>
                             <button id="btn-score-minus-one" class="btn-mini">-1</button>
+                            <button id="btn-score-undo" class="btn-mini score-undo-action" disabled>↶ Deshacer</button>
                         </div>
                         <div class="score-feedback">
                             <p id="score-feedback-text">Crea un equipo para activar el marcador.</p>
-                            <button id="btn-score-undo" class="btn-mini" disabled>Deshacer último</button>
+                        </div>
                         </div>
                     </section>
                     
@@ -311,6 +318,58 @@
             </div>
         </section>
     </main>
+
+    <div id="about-modal" class="about-modal" hidden role="dialog" aria-modal="true" aria-labelledby="about-title">
+        <div class="about-card">
+            <button id="btn-close-about" class="about-close" type="button" aria-label="Cerrar acerca de">×</button>
+            <div class="about-orbit" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="about-stage">
+                <div class="about-emblem" aria-hidden="true">
+                    <span class="about-crown">♛</span>
+                    <span class="about-vinyl"></span>
+                    <span class="about-spark spark-one"></span>
+                    <span class="about-spark spark-two"></span>
+                </div>
+                <div class="about-copy">
+                    <p class="about-kicker">Queen Edition · Obra fan interactiva</p>
+                    <h2 id="about-title">Queen vuelve a sonar sobre la mesa</h2>
+                    <p class="about-lead">
+                        Una obra fan para convertir cada canción en tensión, recuerdo y celebración:
+                        escucha, discute, apuesta, revela la respuesta y deja que la partida se sienta como un concierto.
+                    </p>
+                </div>
+            </div>
+            <div class="about-wave" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="about-feature-grid">
+                <div>
+                    <strong>01 · Escucha</strong>
+                    <span>Cada QR abre una pista. La mesa decide cuándo empieza el show.</span>
+                </div>
+                <div>
+                    <strong>02 · Compite</strong>
+                    <span>Año, título, álbum y orgullo musical. Cada punto se pelea.</span>
+                </div>
+                <div>
+                    <strong>03 · Celebra</strong>
+                    <span>Cartas sin spoilers, estética dorada y espíritu de homenaje.</span>
+                </div>
+            </div>
+            <div class="about-credit">
+                <span>Diseñado y construido con ayuda generativa de</span>
+                <strong>ChatGPT + Codex</strong>
+            </div>
+            <button id="about-sound-status" class="about-sound-status" type="button">Banda sonora Queen lista para sonar al abrir esta obra.</button>
+            <p class="about-note">
+                Proyecto tributo sin ánimo de lucro. Queen, su música, nombres, marcas y material asociado pertenecen a sus titulares.
+            </p>
+        </div>
+    </div>
 
     <footer class="app-footer">
         <p class="footer-note">👑 Un humilde tributo creado sin ánimo de lucro.</p>

@@ -95,7 +95,9 @@
                 label: cleanText(item && item.label, 'Puntos', 40),
                 delta: Math.max(-999, Math.min(999, Math.round(delta))),
                 previousScore: Math.max(-999, Math.min(9999, Math.round(previousScore))),
-                nextScore: Math.max(-999, Math.min(9999, Math.round(nextScore)))
+                nextScore: Math.max(-999, Math.min(9999, Math.round(nextScore))),
+                category: cleanText(item && item.category, '', 20),
+                cardKey: cleanText(item && item.cardKey, '', 220)
             };
         }).filter(Boolean);
     }
