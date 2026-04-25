@@ -9,6 +9,13 @@ El formato sigue una línea simple inspirada en Keep a Changelog.
 ### Añadido
 
 - Capturas de pantalla de configuración inicial y partida en curso enlazadas desde el README.
+- Feedback visible de la última puntuación del marcador y botón para deshacer el último cambio.
+- Persistencia del historial reciente de puntuación para poder corregir errores tras recargar.
+
+### Corregido
+
+- Los botones de puntuación quedan desactivados si no existe ningún equipo activo.
+- El marcador explica dónde se aplican los puntos y cómo corregir una pulsación accidental.
 
 ## [1.2.0] - 2026-04-25
 

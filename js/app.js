@@ -85,6 +85,8 @@ window.onload = function () {
     var btnScoreAlbum = document.getElementById('btn-score-album');
     var btnScorePlusOne = document.getElementById('btn-score-plus-one');
     var btnScoreMinusOne = document.getElementById('btn-score-minus-one');
+    var btnScoreUndo = document.getElementById('btn-score-undo');
+    var scoreFeedbackText = document.getElementById('score-feedback-text');
     var cardTitleEl    = activeCard ? activeCard.querySelector('.card-title') : null;
     var scanTextEl     = activeCard ? activeCard.querySelector('.scan-text') : null;
     var backTitleEl    = activeCard ? activeCard.querySelector('.back-title') : null;
@@ -113,6 +115,7 @@ window.onload = function () {
     var completedFilter = null;
     var teams = [];
     var activeTeamId = null;
+    var scoreHistory = [];
     var playlistSeed = HisterPlaylist.createSeed();
     var activeDiagnostics = null;
     var qrRenderer = HisterQrRenderer.create({
@@ -193,6 +196,10 @@ window.onload = function () {
                 activeTeamId = teams[0] ? teams[0].id : null;
             }
         }
+        var savedScoreHistory = localStorage.getItem('hister_queen_score_history');
+        if (savedScoreHistory) {
+            scoreHistory = HisterSession.normalizeScoreHistory(JSON.parse(savedScoreHistory), teams);
+        }
         var savedPresenter = localStorage.getItem('hister_queen_presenter_mode');
         if (presenterMode && savedPresenter) {
             presenterMode.checked = savedPresenter === 'true';
@@ -218,6 +225,7 @@ window.onload = function () {
             localStorage.setItem('hister_queen_playlist', JSON.stringify(getPlaylistSettings()));
             localStorage.setItem('hister_queen_playlist_seed', playlistSeed);
             localStorage.setItem('hister_queen_teams', JSON.stringify({ teams: teams, activeTeamId: activeTeamId }));
+            localStorage.setItem('hister_queen_score_history', JSON.stringify(scoreHistory));
             if (presenterMode) {
                 localStorage.setItem('hister_queen_presenter_mode', String(presenterMode.checked));
             }
@@ -368,6 +376,9 @@ window.onload = function () {
         teams = teams.filter(function(item) {
             return item.id !== team.id;
         });
+        scoreHistory = scoreHistory.filter(function(item) {
+            return item.teamId !== team.id;
+        });
         activeTeamId = teams[0] ? teams[0].id : null;
         renderScoreboard();
         saveProgress();
@@ -379,11 +390,79 @@ window.onload = function () {
         return found || teams[0];
     }
 
-    function updateTeamScore(delta) {
+    function setScoreFeedback(message) {
+        if (scoreFeedbackText) scoreFeedbackText.textContent = message;
+    }
+
+    function setScoreButtonsEnabled(enabled) {
+        [btnScoreYear, btnScoreTitle, btnScoreAlbum, btnScorePlusOne, btnScoreMinusOne].forEach(function(button) {
+            if (button) button.disabled = !enabled;
+        });
+    }
+
+    function formatSignedNumber(value) {
+        return value > 0 ? '+' + value : String(value);
+    }
+
+    function renderScoreFeedback() {
+        if (btnScoreUndo) btnScoreUndo.disabled = !scoreHistory.length;
+        if (!teams.length) {
+            setScoreFeedback('Crea un equipo en la pantalla inicial para activar el marcador.');
+            return;
+        }
+        if (!scoreHistory.length) {
+            setScoreFeedback('Equipo activo: ' + getActiveTeam().name + '. Los puntos aparecerán aquí al puntuar.');
+            return;
+        }
+        var last = scoreHistory[0];
+        setScoreFeedback('Último: ' + formatSignedNumber(last.delta) + ' ' + last.label + ' para ' + last.teamName + ' · total ' + last.nextScore + '.');
+    }
+
+    function updateTeamScore(delta, label) {
         var team = getActiveTeam();
-        if (!team || !delta) return;
+        if (!team) {
+            setScoreFeedback('No hay equipo activo. Vuelve al inicio y crea un equipo para puntuar.');
+            return;
+        }
+        if (!delta) {
+            setScoreFeedback('Esta regla no suma puntos ahora. Revisa las reglas en Opciones avanzadas.');
+            return;
+        }
+        var previousScore = team.score;
         team.score += delta;
+        scoreHistory.unshift({
+            teamId: team.id,
+            teamName: team.name,
+            label: label || 'Puntos',
+            delta: delta,
+            previousScore: previousScore,
+            nextScore: team.score
+        });
+        scoreHistory = scoreHistory.slice(0, 30);
+        activeTeamId = team.id;
         renderScoreboard();
+        saveProgress();
+    }
+
+    function undoLastScore() {
+        if (!scoreHistory.length) {
+            renderScoreFeedback();
+            return;
+        }
+        var last = scoreHistory.shift();
+        var team = teams.find(function(item) {
+            return item.id === last.teamId;
+        });
+        if (!team) {
+            setScoreFeedback('No se puede deshacer: el equipo de la última puntuación ya no existe.');
+            renderScoreboard();
+            saveProgress();
+            return;
+        }
+        team.score = last.previousScore;
+        activeTeamId = team.id;
+        renderScoreboard();
+        setScoreFeedback('Deshecho: ' + formatSignedNumber(last.delta) + ' ' + last.label + ' de ' + last.teamName + '. Total restaurado a ' + team.score + '.');
         saveProgress();
     }
 
@@ -394,9 +473,11 @@ window.onload = function () {
             activeTeamLabel.textContent = '—';
             if (btnRenameTeam) btnRenameTeam.disabled = true;
             if (btnDeleteTeam) btnDeleteTeam.disabled = true;
+            setScoreButtonsEnabled(false);
+            renderScoreFeedback();
             var empty = document.createElement('p');
             empty.className = 'history-empty';
-            empty.textContent = 'Añade equipos para empezar a puntuar.';
+            empty.textContent = 'Añade equipos en la pantalla inicial para empezar a puntuar.';
             scoreboardList.appendChild(empty);
             return;
         }
@@ -405,6 +486,8 @@ window.onload = function () {
         activeTeamLabel.textContent = getActiveTeam().name;
         if (btnRenameTeam) btnRenameTeam.disabled = false;
         if (btnDeleteTeam) btnDeleteTeam.disabled = false;
+        setScoreButtonsEnabled(true);
+        renderScoreFeedback();
 
         teams.slice().sort(function(a, b) {
             return b.score - a.score;
@@ -726,6 +809,7 @@ window.onload = function () {
         teams.forEach(function(team) {
             team.score = 0;
         });
+        scoreHistory = [];
         saveProgress();
         updateStats();
         renderHistory();
@@ -951,7 +1035,8 @@ window.onload = function () {
             playlistSeed: playlistSeed,
             presenterMode: presenterMode ? presenterMode.checked : false,
             teams: teams,
-            activeTeamId: activeTeamId
+            activeTeamId: activeTeamId,
+            scoreHistory: scoreHistory
         };
         var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
         var url = URL.createObjectURL(blob);
@@ -977,6 +1062,7 @@ window.onload = function () {
                 completedFilter = payload.completedFilter || null;
                 teams = Array.isArray(payload.teams) ? payload.teams : [];
                 activeTeamId = payload.activeTeamId || (teams[0] && teams[0].id) || null;
+                scoreHistory = Array.isArray(payload.scoreHistory) ? payload.scoreHistory : [];
                 if (filterSelect && payload.filter) {
                     filterSelect.value = Array.from(filterSelect.options).some(function(option) {
                         return option.value === payload.filter;
@@ -1178,11 +1264,12 @@ window.onload = function () {
             if (event.key === 'Enter') addTeam();
         });
     }
-    if (btnScoreYear) btnScoreYear.addEventListener('click', function() { updateTeamScore(getScoreValue('year')); });
-    if (btnScoreTitle) btnScoreTitle.addEventListener('click', function() { updateTeamScore(getScoreValue('title')); });
-    if (btnScoreAlbum) btnScoreAlbum.addEventListener('click', function() { updateTeamScore(getScoreValue('album')); });
-    if (btnScorePlusOne) btnScorePlusOne.addEventListener('click', function() { updateTeamScore(1); });
-    if (btnScoreMinusOne) btnScoreMinusOne.addEventListener('click', function() { updateTeamScore(-1); });
+    if (btnScoreYear) btnScoreYear.addEventListener('click', function() { updateTeamScore(getScoreValue('year'), 'Año'); });
+    if (btnScoreTitle) btnScoreTitle.addEventListener('click', function() { updateTeamScore(getScoreValue('title'), 'Título'); });
+    if (btnScoreAlbum) btnScoreAlbum.addEventListener('click', function() { updateTeamScore(getScoreValue('album'), 'Álbum'); });
+    if (btnScorePlusOne) btnScorePlusOne.addEventListener('click', function() { updateTeamScore(1, 'Manual'); });
+    if (btnScoreMinusOne) btnScoreMinusOne.addEventListener('click', function() { updateTeamScore(-1, 'Corrección'); });
+    if (btnScoreUndo) btnScoreUndo.addEventListener('click', undoLastScore);
     if (btnExportSession) btnExportSession.addEventListener('click', exportSession);
     if (importSessionFile) {
         importSessionFile.addEventListener('change', function() {

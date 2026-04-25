@@ -32,6 +32,7 @@ Juego web estático inspirado en Hitster para jugar con canciones de Queen. La a
 - Reglas de puntuación configurables para año, título y álbum.
 - Marcador de equipos persistente con suma rápida por año, título, álbum o puntos manuales.
 - Renombrado y eliminación del equipo activo desde el marcador.
+- Feedback visible de la última puntuación aplicada y botón para deshacer el último cambio de puntos.
 - Filtros de dificultad por hits, cortes de álbum, instrumentales/soundtrack y modo difícil.
 - Playlist manual por álbum, tamaño de partida aleatorio o lista exacta de números de carta.
 - Opciones avanzadas colapsadas por defecto para mantener limpia la pantalla de inicio.
@@ -146,6 +147,8 @@ La sección `Imprimir Colección` está pensada para mostrar todas las cartas de
 La pantalla inicial concentra las decisiones de configuración: filtros, dificultad, reglas, importación/exportación, diagnóstico de previews y gestión de equipos. Al sacar una canción, la consola oculta esos bloques para reducir ruido y deja solo los controles necesarios durante la partida: reproducción, revelar respuesta, volver al inicio, historial y marcador.
 
 Los botones de puntuación aplican puntos al equipo activo. `+ Año`, `+ Título` y `+ Álbum` usan los valores definidos en las reglas configurables; `+1` y `-1` sirven para ajustes manuales rápidos.
+
+Si no hay equipos creados, los botones de puntuación quedan desactivados y el marcador muestra una indicación clara. Si pulsas un botón por error, usa `Deshacer último` para revertir la última puntuación aplicada al equipo correspondiente.
 
 ## PWA y uso sin conexión
 

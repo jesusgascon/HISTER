@@ -74,6 +74,32 @@
         return output;
     }
 
+    function normalizeScoreHistory(values, teams) {
+        if (!Array.isArray(values)) return [];
+        var teamIds = {};
+        teams.forEach(function(team) {
+            teamIds[team.id] = true;
+        });
+
+        return values.slice(0, 30).map(function(item) {
+            var delta = Number(item && item.delta);
+            var previousScore = Number(item && item.previousScore);
+            var nextScore = Number(item && item.nextScore);
+            var teamId = cleanText(item && item.teamId, '', 80);
+            if (!teamIds[teamId] || !Number.isFinite(delta) || !Number.isFinite(previousScore) || !Number.isFinite(nextScore)) {
+                return null;
+            }
+            return {
+                teamId: teamId,
+                teamName: cleanText(item && item.teamName, 'Equipo', 60),
+                label: cleanText(item && item.label, 'Puntos', 40),
+                delta: Math.max(-999, Math.min(999, Math.round(delta))),
+                previousScore: Math.max(-999, Math.min(9999, Math.round(previousScore))),
+                nextScore: Math.max(-999, Math.min(9999, Math.round(nextScore)))
+            };
+        }).filter(Boolean);
+    }
+
     function normalizeImportedPayload(payload, allSongs) {
         payload = payload || {};
         var validKeys = {};
@@ -101,7 +127,8 @@
             playlistSeed: cleanText(payload.playlistSeed, '', 80),
             presenterMode: typeof payload.presenterMode === 'boolean' ? payload.presenterMode : false,
             teams: teams,
-            activeTeamId: activeTeamId
+            activeTeamId: activeTeamId,
+            scoreHistory: normalizeScoreHistory(payload.scoreHistory, teams)
         };
     }
 
@@ -110,6 +137,7 @@
         normalizeRules: normalizeRules,
         normalizePlaylist: normalizePlaylist,
         normalizeTeams: normalizeTeams,
+        normalizeScoreHistory: normalizeScoreHistory,
         normalizeImportedPayload: normalizeImportedPayload
     };
 }(window));

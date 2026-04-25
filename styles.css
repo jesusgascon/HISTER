@@ -1177,6 +1177,28 @@ body::before {
     background: rgba(255, 61, 0, 0.1);
 }
 
+.score-feedback {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.14);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.22);
+}
+
+.score-feedback p {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.score-feedback .btn-mini {
+    white-space: nowrap;
+}
+
 /* =========================================
    PRINT SCREEN
 ========================================= */
@@ -1591,6 +1613,7 @@ body::before {
     .team-form,
     .team-management,
     .score-actions,
+    .score-feedback,
     .diagnostics-header {
         grid-template-columns: 1fr;
         flex-direction: column;
